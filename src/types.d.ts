@@ -296,7 +296,8 @@ type SettingsPageName =
   | "firebase"
   | "pushNotifications"
   | "termsAndConditions"
-  | "privacyPolicy";
+  | "privacyPolicy"
+  | "cancellationPolicy";
 
 interface Subcategory {
   name: string;

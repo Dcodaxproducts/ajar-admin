@@ -22,9 +22,18 @@ interface DamageLiabilityTermsFormValues {
   insuranceRequired: boolean;
 }
 
-const DamageLiabilityTerms = ({ zone }: { zone: string }) => {
+const DamageLiabilityTerms = ({
+  zone,
+  subCategory,
+}: {
+  zone: string;
+  subCategory: string;
+}) => {
   const t = useTranslations("translation");
-  const { data, isLoading, error } = useGetDamageLiabilityTerms(zone);
+  const { data, isLoading, error } = useGetDamageLiabilityTerms(
+    zone,
+    subCategory
+  );
   const {
     responsibilityClause = "",
     inspectionRequired = false,
@@ -63,7 +72,7 @@ const DamageLiabilityTerms = ({ zone }: { zone: string }) => {
   } = useUpdateDamageLiabilityTerms();
 
   const onSubmit = (data: any) => {
-    update({ zoneId: zone, data });
+    update({ zoneId: zone, subCategoryId: subCategory, data });
   };
 
   if (isLoading) return <Loader />;

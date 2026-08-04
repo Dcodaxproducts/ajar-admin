@@ -43,9 +43,18 @@ const schema = z.object({
 
 type RentalDurationFormValues = z.infer<typeof schema>;
 
-const RentalDurationLimits = ({ zone }: { zone: string }) => {
+const RentalDurationLimits = ({
+  zone,
+  subCategory,
+}: {
+  zone: string;
+  subCategory: string;
+}) => {
   const t = useTranslations("translation");
-  const { data, isLoading, error } = useGetRentalDurationLimits(zone);
+  const { data, isLoading, error } = useGetRentalDurationLimits(
+    zone,
+    subCategory
+  );
 
   const methods = useForm<RentalDurationFormValues>({
     resolver: zodResolver(schema),
@@ -86,7 +95,7 @@ const RentalDurationLimits = ({ zone }: { zone: string }) => {
   const { mutate: update, isPending: updating } = useUpdateRentalDurationLimits();
 
   const onSubmit = (values: RentalDurationFormValues) => {
-    update({ zoneId: zone, data: values });
+    update({ zoneId: zone, subCategoryId: subCategory, data: values });
   };
 
   if (isLoading) return <Loader />;

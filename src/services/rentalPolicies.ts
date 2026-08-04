@@ -6,6 +6,7 @@ interface RentalPolicies {
     depositRequired: boolean;
     depositAmount: number;
     depositConditions: string;
+    disputeWindowDays: number;
   };
   damageLiabilityTerms: {
     responsibilityClause: string;
@@ -27,9 +28,9 @@ export interface GetRentalPoliciesResponse {
 }
 
 // Service to get security deposit rules for a specific zone
-export const getSecurityDepositRules = async (zoneId: string) => {
+export const getSecurityDepositRules = async (zoneId: string, subCategoryId: string) => {
   const response = await api.get(
-    `/zones/${zoneId}/rental-policies/security-deposit-rules`
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/security-deposit-rules`
   );
   return response.data;
 };
@@ -37,19 +38,20 @@ export const getSecurityDepositRules = async (zoneId: string) => {
 // Service to update security deposit rules for a specific zone
 export const updateSecurityDepositRules = async (
   zoneId: string,
+  subCategoryId: string,
   depositRules: any
 ) => {
   const response = await api.patch(
-    `/zones/${zoneId}/rental-policies/security-deposit-rules`,
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/security-deposit-rules`,
     depositRules
   );
   return response.data;
 };
 
 // Service to get damage liability terms for a specific zone
-export const getDamageLiabilityTerms = async (zoneId: string) => {
+export const getDamageLiabilityTerms = async (zoneId: string, subCategoryId: string) => {
   const response = await api.get(
-    `/zones/${zoneId}/rental-policies/damage-liability-terms`
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/damage-liability-terms`
   );
   return response.data;
 };
@@ -57,19 +59,20 @@ export const getDamageLiabilityTerms = async (zoneId: string) => {
 // Service to update damage liability terms for a specific zone
 export const updateDamageLiabilityTerms = async (
   zoneId: string,
+  subCategoryId: string,
   liabilityTerms: any
 ) => {
   const response = await api.patch(
-    `/zones/${zoneId}/rental-policies/damage-liability-terms`,
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/damage-liability-terms`,
     liabilityTerms
   );
   return response.data;
 };
 
 // Service to get rental duration limits for a specific zone
-export const getRentalDurationLimits = async (zoneId: string) => {
+export const getRentalDurationLimits = async (zoneId: string, subCategoryId: string) => {
   const response = await api.get(
-    `/zones/${zoneId}/rental-policies/rental-duration-limits`
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/rental-duration-limits`
   );
   return response.data;
 };
@@ -77,10 +80,11 @@ export const getRentalDurationLimits = async (zoneId: string) => {
 // Service to update rental duration limits for a specific zone
 export const updateRentalDurationLimits = async (
   zoneId: string,
+  subCategoryId: string,
   durationLimits: any
 ) => {
   const response = await api.patch(
-    `/zones/${zoneId}/rental-policies/rental-duration-limits`,
+    `/zones/${zoneId}/subcategories/${subCategoryId}/rental-policies/rental-duration-limits`,
     durationLimits
   );
   return response.data;

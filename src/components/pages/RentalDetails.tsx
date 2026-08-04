@@ -14,7 +14,7 @@ import ResponseError from "../ResponseError";
 import { Button } from "../ui/button";
 import { getImageUrl } from "@/utils/getImageUrl";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +72,16 @@ const RentalListingDetail = ({ id }: { id: string }) => {
     status?: "pending" | "approved" | "rejected" | string;
     documents?: ListingDocument[];
   } = rentalRequest?.data || {};
+  const cleanedData = removeFields(rentalRequest?.data as any, [
+    "_id", "leaser", "subCategory", "zone", "ratings", "name", "subTitle",
+    "images", "rentalImages", "description", "price", "isActive", "language",
+    "documents", "isAvailable", "currentBookingId", "status", "priceUnit",
+    "createdAt", "updatedAt", "__v", "userDocuments", "leaserDocuments",
+    "adminFee", "tax", "languages", "averageRating", "totalReviews", "rejectionNote", "location", "refundNote", "refundNote", "bookings", "reviews", "unavailability", "dynamicPricing", "dropoffLocation", "timezone"
+  ]);
+  const detailEntries = Object.entries(cleanedData).filter(([, value]) =>
+    hasDisplayValue(value)
+  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -134,6 +144,18 @@ const RentalListingDetail = ({ id }: { id: string }) => {
             <InfoItem label={t("location")} value={zone?.name} />
             <InfoItem label={t("status")} value={status} />
           </div>
+
+          {detailEntries.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              {detailEntries.map(([key, value]) => (
+                <InfoItem
+                  key={key}
+                  label={formatDynamicLabel(key)}
+                  value={formatDynamicValue(value)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Price */}
           <p className="text-2xl font-bold text-green-600">
@@ -325,7 +347,7 @@ const UserCard = ({ user }: { user: User }) => (
   </div>
 );
 
-const InfoItem = ({ label, value }: { label: string; value?: string }) => (
+const InfoItem = ({ label, value }: { label: string; value?: ReactNode }) => (
   <div>
     <p className="text-xs text-muted-foreground">{label}</p>
     <p className="font-medium">{value || "-"}</p>
@@ -335,6 +357,56 @@ const InfoItem = ({ label, value }: { label: string; value?: string }) => (
 /** Utils (local to this component) */
 const isImage = (u: string) => /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(u);
 const isPdf = (u: string) => /\.pdf$/i.test(u);
+
+const removeFields = <T extends Record<string, any>>(
+  data: T | null | undefined,
+  fields: string[]
+) => {
+  if (!data || typeof data !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(data).filter(([key]) => !fields.includes(key))
+  );
+};
+
+const hasDisplayValue = (value: any) => {
+  if (value === null || value === undefined || value === "") return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  return true;
+};
+
+const formatDynamicLabel = (key: string) =>
+  key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatDynamicValue = (value: any): ReactNode => {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return value.toLocaleString();
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    if (value.every((item) => ["string", "number", "boolean"].includes(typeof item))) {
+      return value.map(formatDynamicValue).join(", ");
+    }
+
+    return (
+      <span className="whitespace-pre-wrap break-words">
+        {JSON.stringify(value, null, 2)}
+      </span>
+    );
+  }
+  if (typeof value === "object") {
+    return (
+      <span className="whitespace-pre-wrap break-words">
+        {JSON.stringify(value, null, 2)}
+      </span>
+    );
+  }
+
+  return String(value);
+};
 
 /**
  * Normalize and guard against obviously bad URLs (e.g., "www://...").

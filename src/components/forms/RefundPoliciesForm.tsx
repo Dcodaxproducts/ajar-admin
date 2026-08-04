@@ -27,7 +27,7 @@ import { Trash2, PlusCircle } from "lucide-react";
 // ─── types ───────────────────────────────────────────────────────────────────
 
 interface CancellationTier {
-  daysBeforeCheckIn: number;
+  hoursBeforeCheckIn: number;
   percentage: number;
   label: string;
 }
@@ -39,7 +39,7 @@ interface RefundPolicyFormValues {
 }
 
 const DEFAULT_TIER: CancellationTier = {
-  daysBeforeCheckIn: 0,
+  hoursBeforeCheckIn: 0,
   percentage: 0,
   label: "",
 };
@@ -118,7 +118,7 @@ const RefundPoliciesForm = () => {
       data: {
         ...values,
         tiers: values.tiers.map((tier) => ({
-          daysBeforeCheckIn: Number(tier.daysBeforeCheckIn),
+          hoursBeforeCheckIn: Number(tier.hoursBeforeCheckIn),
           percentage: Number(tier.percentage),
           label: tier.label.trim(),
         })),
@@ -237,8 +237,8 @@ const RefundPoliciesForm = () => {
               className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end p-4 border rounded-lg"
             >
               <TextInput
-                name={`tiers.${index}.daysBeforeCheckIn`}
-                label="daysBeforeCheckIn"
+                name={`tiers.${index}.hoursBeforeCheckIn`}
+                label="hoursBeforeCheckIn"
                 type="number"
                 control={control}
                 placeholder="0"

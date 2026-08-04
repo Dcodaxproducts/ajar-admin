@@ -68,6 +68,7 @@ export const navMenu: MenuItem[] = [
   { path: "/rental-policies", title: "rentalPolicies" },
   { path: "/terms-and-conditions", title: "termsAndConditions" },
   { path: "/privacy-policy", title: "privacyPolicy" },
+  { path: "/cancellation-policy", title: "cancellationPolicy" },
 ];
 
 export const businessNavMenu: MenuItem[] = [

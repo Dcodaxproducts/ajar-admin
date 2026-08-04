@@ -19,28 +19,41 @@ interface SecurityDepositRulesFormValues {
   depositRequired: boolean;
   depositAmount: number;
   depositConditions: string;
+  disputeWindowDays: number;
 }
 
-const SecurityDepositRules = ({ zone }: { zone: string }) => {
+const SecurityDepositRules = ({
+  zone,
+  subCategory,
+}: {
+  zone: string;
+  subCategory: string;
+}) => {
   const t = useTranslations("translation");
-  const { data, isLoading, error } = useGetSecurityDepositRules(zone);
+  const { data, isLoading, error } = useGetSecurityDepositRules(
+    zone,
+    subCategory
+  );
 
   const {
     depositRequired = false,
     depositAmount = 0,
     depositConditions = "",
+    disputeWindowDays = 7,
   } = data?.data?.securityDepositRules || {};
 
   const initialData = {
     depositRequired,
     depositAmount,
     depositConditions,
+    disputeWindowDays,
   };
 
   const schema = z.object({
     depositRequired: z.boolean(),
     depositAmount: z.number(),
     depositConditions: z.string(),
+    disputeWindowDays: z.number(),
   });
 
   const methods = useForm<SecurityDepositRulesFormValues>({
@@ -55,8 +68,9 @@ const SecurityDepositRules = ({ zone }: { zone: string }) => {
       depositRequired,
       depositAmount,
       depositConditions,
+      disputeWindowDays,
     });
-  }, [reset, depositRequired, depositAmount, depositConditions]);
+  }, [reset, depositRequired, depositAmount, depositConditions, disputeWindowDays]);
 
   const {
     mutate: update,
@@ -65,7 +79,7 @@ const SecurityDepositRules = ({ zone }: { zone: string }) => {
   } = useUpdateSecurityDepositRules();
 
   const onSubmit = (data: any) => {
-    update({ zoneId: zone, data });
+    update({ zoneId: zone, subCategoryId: subCategory, data });
   };
 
   if (isLoading) return <Loader />;
@@ -94,6 +108,13 @@ const SecurityDepositRules = ({ zone }: { zone: string }) => {
             placeholder={t("enterDepositConditions")}
             type="textarea"
             className="col-span-2"
+          />
+          <TextInput
+            name="disputeWindowDays"
+            label="disputeWindowDays"
+            type="number"
+            control={control}
+            placeholder={t("enterDisputeWindowDays")}
           />
         </div>
 
