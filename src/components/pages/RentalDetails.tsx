@@ -38,7 +38,6 @@ const RentalListingDetail = ({ id }: { id: string }) => {
   const { data: rentalRequest, isLoading, error } = useRentalListing(id);
   const { mutate: updateStatus, isPending: isUpdating } =
     useUpdateRentalListing();
-    console.log(rentalRequest)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionNote, setRejectionNote] = useState("");
 
@@ -56,6 +55,7 @@ const RentalListingDetail = ({ id }: { id: string }) => {
     subCategory,
     leaser: leaser,
     zone,
+    location,
     status,
     documents,
   }: {
@@ -69,6 +69,7 @@ const RentalListingDetail = ({ id }: { id: string }) => {
     subCategory?: { name?: string; category?: { name?: string } };
     leaser?: User;
     zone?: { name?: string };
+    location?: { address?: string };
     status?: "pending" | "approved" | "rejected" | string;
     documents?: ListingDocument[];
   } = rentalRequest?.data || {};
@@ -141,7 +142,8 @@ const RentalListingDetail = ({ id }: { id: string }) => {
 
           {/* Common Info */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <InfoItem label={t("location")} value={zone?.name} />
+            <InfoItem label={t("zone")} value={zone?.name} />
+            <InfoItem label={t("location")} value={location?.address} />
             <InfoItem label={t("status")} value={status} />
           </div>
 

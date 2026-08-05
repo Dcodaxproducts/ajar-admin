@@ -1,4 +1,7 @@
 {
+  "translation": {
+    "reminderSettings": "Reminder Settings"
+  },
   "navigation": {
     "home": "Startseite",
     "about": "Über uns",

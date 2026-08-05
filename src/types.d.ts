@@ -774,6 +774,32 @@ interface Notification {
   data: NotificationData;
 }
 
+type ReminderChannel = "push" | "email" | "sms";
+type ReminderAudience = "renter" | "leaser" | "admin";
+type ReminderTiming = "before" | "after";
+type ReminderOffsetUnit = "minutes" | "hours" | "days";
+
+interface ReminderSetting {
+  _id: string;
+  type: string;
+  label: string;
+  offsetValue: number;
+  offsetUnit: ReminderOffsetUnit;
+  enabled: boolean;
+  channels: ReminderChannel[];
+  audience: ReminderAudience;
+  timing: ReminderTiming;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type ReminderSettingUpdate = {
+  offsetValue?: number;
+  offsetUnit?: ReminderOffsetUnit;
+  enabled?: boolean;
+  channels?: ReminderChannel[];
+};
+
 interface SeasonalGraphWeek {
   week: string;
   totalBookings: number;
