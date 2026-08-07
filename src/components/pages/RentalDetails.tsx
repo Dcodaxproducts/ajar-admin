@@ -33,6 +33,12 @@ type ListingDocument = {
   reminderSent?: boolean;
 };
 
+type DynamicPricing = {
+  price?: number;
+  startDate?: string;
+  endDate?: string;
+};
+
 const RentalListingDetail = ({ id }: { id: string }) => {
   const t = useTranslations("translation");
   const { data: rentalRequest, isLoading, error } = useRentalListing(id);
@@ -43,46 +49,59 @@ const RentalListingDetail = ({ id }: { id: string }) => {
 
   if (isLoading) return <Loader />;
   if (error) return <ResponseError error={error.message} />;
-
+console.log(rentalRequest?.data)
   const {
     name,
+    subTitle,
     description,
     price,
+    priceUnit,
     images,
     rentalImages,
     createdAt,
-    isActive,
     subCategory,
     leaser: leaser,
     zone,
     location,
     status,
+    rejectionNote: listingRejectionNote,
     documents,
+    unavailability,
+    dynamicPricing,
   }: {
     name?: string;
+    subTitle?: string;
     description?: string;
     price?: number;
+    priceUnit?: string;
     images?: string[];
     rentalImages?: string[];
     createdAt?: string;
-    isActive?: boolean;
     subCategory?: { name?: string; category?: { name?: string } };
     leaser?: User;
     zone?: { name?: string };
     location?: { address?: string };
     status?: "pending" | "approved" | "rejected" | string;
+    rejectionNote?: string | null;
     documents?: ListingDocument[];
+    unavailability?: string[];
+    dynamicPricing?: DynamicPricing | DynamicPricing[];
   } = rentalRequest?.data || {};
   const cleanedData = removeFields(rentalRequest?.data as any, [
     "_id", "leaser", "subCategory", "zone", "ratings", "name", "subTitle",
     "images", "rentalImages", "description", "price", "isActive", "language",
     "documents", "isAvailable", "currentBookingId", "status", "priceUnit",
     "createdAt", "updatedAt", "__v", "userDocuments", "leaserDocuments",
-    "adminFee", "tax", "languages", "averageRating", "totalReviews", "rejectionNote", "location", "refundNote", "refundNote", "bookings", "reviews", "unavailability", "dynamicPricing", "dropoffLocation", "timezone"
+    "adminFee", "tax", "languages", "averageRating", "totalReviews", "rejectionNote", "location", "refundNote", "refundNote", "bookings", "reviews", "unavailability", "dynamicPricing", "dropoffLocation", "timezone", "rentalPolicy"
   ]);
   const detailEntries = Object.entries(cleanedData).filter(([, value]) =>
     hasDisplayValue(value)
   );
+  const dynamicPricingEntries = Array.isArray(dynamicPricing)
+    ? dynamicPricing
+    : dynamicPricing
+      ? [dynamicPricing]
+      : [];
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -90,6 +109,9 @@ const RentalListingDetail = ({ id }: { id: string }) => {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{name}</CardTitle>
+          {subTitle && (
+            <p className="text-sm text-muted-foreground">{subTitle}</p>
+          )}
 
           <div className="flex items-center gap-4 mt-2 text-sm">
             <span className="font-medium text-muted-foreground">
@@ -98,10 +120,6 @@ const RentalListingDetail = ({ id }: { id: string }) => {
             <span className="text-muted-foreground">
               {new Date(createdAt || "").toLocaleDateString()}
             </span>
-            {/* Active/Inactive */}
-            {/* <Status value={isActive ? "active" : "inactive"} /> */}
-            {/* Request Status (pending/approved/rejected) */}
-            {/* {status && <Status value={status} />} */}
           </div>
         </CardHeader>
 
@@ -147,6 +165,17 @@ const RentalListingDetail = ({ id }: { id: string }) => {
             <InfoItem label={t("status")} value={status} />
           </div>
 
+          {listingRejectionNote && (
+            <div className="space-y-1 rounded-lg border border-red-200 bg-red-50/70 p-4">
+              <h3 className="text-sm font-semibold text-red-700">
+                {t("rejectionNote")}
+              </h3>
+              <p className="text-sm text-red-700 whitespace-pre-line">
+                {listingRejectionNote}
+              </p>
+            </div>
+          )}
+
           {detailEntries.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               {detailEntries.map(([key, value]) => (
@@ -160,11 +189,62 @@ const RentalListingDetail = ({ id }: { id: string }) => {
           )}
 
           {/* Price */}
-          <p className="text-2xl font-bold text-green-600">
-            ${price?.toLocaleString()}
+          <p className="text-2xl text-green-600">
+            <span className="font-bold">${price?.toLocaleString()}</span>/{priceUnit}
           </p>
         </CardContent>
       </Card>
+
+      {(dynamicPricingEntries.length > 0 ||
+        (Array.isArray(unavailability) && unavailability.length > 0)) && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Availability & Pricing</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {dynamicPricingEntries.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Dynamic Pricing</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {dynamicPricingEntries.map((item, index) => (
+                    <div
+                      key={`${item.startDate || "start"}-${item.endDate || "end"}-${index}`}
+                      className="rounded-lg border bg-slate-50/50 p-4"
+                    >
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <InfoItem
+                          label="Price"
+                          value={formatPrice(item.price, priceUnit)}
+                        />
+                        <InfoItem
+                          label="Date Range"
+                          value={formatDateRange(item.startDate, item.endDate)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(unavailability) && unavailability.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Unavailability</h3>
+                <div className="flex flex-wrap gap-2">
+                  {unavailability.map((date) => (
+                    <span
+                      key={date}
+                      className="rounded-full border bg-slate-50 px-3 py-1 text-sm font-medium text-muted-foreground"
+                    >
+                      {formatDisplayDate(date)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Documents Card */}
       {Array.isArray(documents) && documents.length > 0 && (
@@ -256,23 +336,23 @@ const RentalListingDetail = ({ id }: { id: string }) => {
 
       {/* Actions */}
       {status === "pending" && !documents?.some((doc) => doc.isExpired) && (
-  <div className="flex justify-end gap-4">
-    <Button
-      variant="destructive"
-      disabled={isUpdating}
-      onClick={() => setRejectDialogOpen(true)}
-    >
-      {t("reject")}
-    </Button>
-    <Button
-      variant="success"
-      disabled={isUpdating}
-      onClick={() => updateStatus({ id, status: "approved" })}
-    >
-      {t("approve")}
-    </Button>
-  </div>
-)}
+        <div className="flex justify-end gap-4">
+          <Button
+            variant="destructive"
+            disabled={isUpdating}
+            onClick={() => setRejectDialogOpen(true)}
+          >
+            {t("reject")}
+          </Button>
+          <Button
+            variant="success"
+            disabled={isUpdating}
+            onClick={() => updateStatus({ id, status: "approved" })}
+          >
+            {t("approve")}
+          </Button>
+        </div>
+      )}
 
       {/* Rejection Note Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
@@ -359,6 +439,27 @@ const InfoItem = ({ label, value }: { label: string; value?: ReactNode }) => (
 /** Utils (local to this component) */
 const isImage = (u: string) => /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(u);
 const isPdf = (u: string) => /\.pdf$/i.test(u);
+
+const formatDisplayDate = (date?: string) => {
+  if (!date) return "-";
+  const parsedDate = new Date(date);
+  if (Number.isNaN(parsedDate.getTime())) return date;
+  return parsedDate.toLocaleDateString();
+};
+
+const formatDateRange = (startDate?: string, endDate?: string) => {
+  const start = formatDisplayDate(startDate);
+  const end = formatDisplayDate(endDate);
+
+  if (start === "-" && end === "-") return "-";
+  if (start === end) return start;
+  return `${start} - ${end}`;
+};
+
+const formatPrice = (price?: number, unit?: string) => {
+  if (price === null || price === undefined) return "-";
+  return `$${price.toLocaleString()}${unit ? `/${unit}` : ""}`;
+};
 
 const removeFields = <T extends Record<string, any>>(
   data: T | null | undefined,
