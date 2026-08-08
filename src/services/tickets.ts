@@ -9,6 +9,10 @@ type GetTicketsResponse = ApiResponse<{
 }>;
 
 type GetTicketResponse = ApiResponse<Ticket>;
+export type TicketStatusUpdatePayload = {
+  status: string;
+  approvedAmount?: number;
+};
 // ✅ Fetch paginated tickets
 export const getTickets = async ({
   page = 1,
@@ -38,7 +42,7 @@ export const addTicket = async (ticketData: Partial<Ticket>) => {
 // ✅ Update a ticket
 export const updateTicketStatus = async (
   ticketId: string,
-  ticketData: { status: string }
+  ticketData: TicketStatusUpdatePayload
 ) => {
   const response = await api.patch(`/tickets/${ticketId}/status`, ticketData);
   return response.data;

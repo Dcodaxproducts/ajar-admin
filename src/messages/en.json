@@ -587,6 +587,10 @@
     "expiryTimeMinutes": "Expiry Time (Minutes)",
     "attachments": "Attachments",
     "ticketActionNote": "Approving will deduct the amount from the renter and transfer it to the leaser. Rejecting will not deduct any amount.",
+    "partiallyApprove": "Partially Approve",
+    "approvedAmount": "Approved Amount",
+    "partialApprovalAmountError": "Approved amount must be greater than 0 and cannot exceed the security deposit.",
+    "partialApprovalLimit": "Maximum allowed: ${amount} security deposit.",
     "parties": "Parties",
     "privacyPolicy": "Privacy Policy",
     "savePrivacyPolicy": "Save Privacy Policy",
@@ -643,6 +647,7 @@
     "resolved": "Resolved",
     "unblocked": "Unblocked",
     "approved": "Approved",
+    "partially_approved": "Partially Approved",
     "rejected": "Rejected",
     "all": "All"
   },

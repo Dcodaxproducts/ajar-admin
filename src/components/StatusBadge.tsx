@@ -14,12 +14,14 @@ interface StatusProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const getStatusColor = (value: Status) => {
-  switch (value?.toLowerCase()) {
+  switch (value?.toLowerCase().replace(/\s+/g, "_")) {
     case "pending":
       return "bg-yellow-500 text-white";
     case "approved":
     case "active":
       return "bg-green-600 text-white";
+    case "partially_approved":
+      return "bg-emerald-500 text-white";
     case "rejected":
     case "blocked":
       return "bg-red-500 text-white";
@@ -33,6 +35,8 @@ const getStatusColor = (value: Status) => {
 };
 
 const Status: React.FC<StatusProps> = ({ value, className, ...props }) => {
+  const label = String(value || "").replace(/_/g, " ");
+
   return (
     <span
       {...props}
@@ -42,7 +46,7 @@ const Status: React.FC<StatusProps> = ({ value, className, ...props }) => {
         className
       )}
     >
-      {value}
+      {label}
     </span>
   );
 };

@@ -5,6 +5,16 @@ import ResponseError from "@/components/ResponseError";
 import Status from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useGetTicket, useUpdateTicketStatus } from "@/hooks/useTickets";
 import { format } from "date-fns";
 import TicketDetailSkeleton from "../skeletons/TicketSkeleton";
@@ -12,16 +22,23 @@ import { useTranslations } from "next-intl";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
 import { getImageUrl } from "@/utils/getImageUrl";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   CalendarDays, CalendarCheck, DollarSign,
   AlertCircle, Mail, FileText, Paperclip, Users,
 } from "lucide-react";
+
+type TicketAction = "approved" | "rejected" | "partially_approved";
 
 const TicketDetail = ({ id }: { id: string }) => {
   const t = useTranslations("translation");
   const tStatus = useTranslations("status");
   const { data, isLoading, error } = useGetTicket(id, true);
   const { mutate: updateTicketStatus, isPending } = useUpdateTicketStatus();
+  const [partialDialogOpen, setPartialDialogOpen] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState("");
+  const [pendingAction, setPendingAction] = useState<TicketAction | null>(null);
   const ticket = data?.data;
 
   if (isLoading) return <TicketDetailSkeleton />;
@@ -29,10 +46,52 @@ const TicketDetail = ({ id }: { id: string }) => {
   if (!ticket) return null;
 
   const { booking, rentalText, issueType, damagedCharges, attachments, status, createdAt } = ticket;
+  const securityDeposit = Number(booking?.priceDetails?.securityDeposit || 0);
+  const partialAmount = Number(approvedAmount);
+  const isPartialAmountValid = partialAmount > 0 && partialAmount <= securityDeposit;
 
   // renter and leaser from populated booking
   const renter = booking?.renter;
   const leaser = booking?.leaser;
+
+  const handlePartialAmountChange = (value: string) => {
+    if (value === "") {
+      setApprovedAmount("");
+      return;
+    }
+
+    const nextAmount = Number(value);
+    if (Number.isNaN(nextAmount)) return;
+
+    setApprovedAmount(String(Math.min(nextAmount, securityDeposit)));
+  };
+
+  const handlePartialApproval = () => {
+    if (!isPartialAmountValid) {
+      toast.error(t("partialApprovalAmountError"));
+      return;
+    }
+
+    setPendingAction("partially_approved");
+    updateTicketStatus(
+      { id, status: "partially_approved", approvedAmount: partialAmount },
+      {
+        onSuccess: () => {
+          setPartialDialogOpen(false);
+          setApprovedAmount("");
+        },
+        onSettled: () => setPendingAction(null),
+      }
+    );
+  };
+
+  const handleStatusUpdate = (nextStatus: "approved" | "rejected") => {
+    setPendingAction(nextStatus);
+    updateTicketStatus(
+      { id, status: nextStatus },
+      { onSettled: () => setPendingAction(null) }
+    );
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -73,6 +132,9 @@ const TicketDetail = ({ id }: { id: string }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem icon={<AlertCircle className="w-4 h-4" />} label={t("type")} value={issueType} />
             <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("damagedCharges")} value={`$${Number(damagedCharges || 0).toFixed(2)}`} />
+            {ticket.approvedAmount !== undefined && (
+              <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("approvedAmount")} value={`$${Number(ticket.approvedAmount || 0).toFixed(2)}`} />
+            )}
           </div>
 
           {rentalText && (
@@ -127,6 +189,8 @@ const TicketDetail = ({ id }: { id: string }) => {
                 value={format(new Date(booking.dates.checkOut), "PPp")} />
               <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("totalPrice")}
                 value={`$${Number(booking.priceDetails?.totalPrice || 0).toFixed(2)}`} />
+              <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("securityDeposit")}
+                value={`$${securityDeposit.toFixed(2)}`} />
               <div>
                 <p className="text-xs text-muted-foreground mb-1">{t("status")}</p>
                 <Status value={booking.status?.toLowerCase()} />
@@ -174,12 +238,54 @@ const TicketDetail = ({ id }: { id: string }) => {
               {t("ticketActionNote")}
             </p>
           </div>
-          <div className="flex justify-end gap-3">
-            <Button onClick={() => updateTicketStatus({ id, status: "rejected" })} disabled={isPending} variant="destructive">
-              {t("reject")}
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button onClick={() => handleStatusUpdate("rejected")} disabled={isPending} variant="destructive">
+              {pendingAction === "rejected" ? t("processing") : t("reject")}
             </Button>
-            <Button onClick={() => updateTicketStatus({ id, status: "approved" })} disabled={isPending} variant="success">
-              {isPending ? t("processing") : t("approve")}
+            <Dialog open={partialDialogOpen} onOpenChange={setPartialDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  disabled={isPending || securityDeposit <= 0}
+                  variant="outline"
+                  onClick={() => setApprovedAmount(securityDeposit ? String(securityDeposit) : "")}
+                >
+                  {t("partiallyApprove")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t("partiallyApprove")}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="approvedAmount">{t("approvedAmount")}</Label>
+                    <Input
+                      id="approvedAmount"
+                      type="number"
+                      min={0.01}
+                      max={securityDeposit}
+                      step="0.01"
+                      value={approvedAmount}
+                      onChange={(event) => handlePartialAmountChange(event.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("partialApprovalLimit", { amount: securityDeposit.toFixed(2) })}
+                  </p>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button type="button" variant="outline" onClick={() => setPartialDialogOpen(false)}>
+                    {t("cancel")}
+                  </Button>
+                  <Button type="button" onClick={handlePartialApproval} disabled={isPending || !isPartialAmountValid} variant="success">
+                    {pendingAction === "partially_approved" ? t("processing") : t("submit")}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Button onClick={() => handleStatusUpdate("approved")} disabled={isPending} variant="success">
+              {pendingAction === "approved" ? t("processing") : t("approve")}
             </Button>
           </div>
         </div>

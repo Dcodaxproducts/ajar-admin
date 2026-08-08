@@ -412,12 +412,13 @@ type Ticket = {
   additionalFees: number;
   attachments: any[]; // If you have a defined attachment structure, replace 'any'
   damagedCharges: number;
+  approvedAmount?: number;
   status: string;
   createdAt: string;
   updatedAt: string;
 };
 
-type CommonStatus = "pending" | "approved" | "rejected";
+type CommonStatus = "pending" | "approved" | "rejected" | "partially_approved";
 
 interface RefundRequest {
   _id: string;
