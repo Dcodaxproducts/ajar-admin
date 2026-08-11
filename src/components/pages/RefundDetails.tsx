@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Clock, CheckCircle2 } from "lucide-react";
 
 const RefundDetail = ({ id }: { id: string }) => {
   const t = useTranslations("translation");
@@ -43,6 +44,8 @@ const RefundDetail = ({ id }: { id: string }) => {
     createdAt,
     policy,
     booking,
+    isEarlyReturn,
+    breakdown,
   } = refundResponse?.data || {};
 
   const priceDetails = booking?.priceDetails;
@@ -51,7 +54,15 @@ const RefundDetail = ({ id }: { id: string }) => {
   const adminFee = priceDetails?.adminFee ?? 0;
   const tax = priceDetails?.tax ?? 0;
   const secDep = securityDeposit ?? 0;
-  const totalToRenter = (totalRefundAmount ?? 0) + adminFee + tax + secDep;
+
+  // An early return keeps the platform fee — the rental actually ran — and the
+  // deposit settles later through the damage dispute window instead.
+  const totalToRenter = isEarlyReturn
+    ? totalRefundAmount ?? 0
+    : (totalRefundAmount ?? 0) + adminFee + tax + secDep;
+
+  const lines = breakdown ?? [];
+  const hasExtensions = lines.length > 1;
 
   const handleUpdateStatus = (newStatus: "accept" | "reject", adminNote?: string) => {
     updateStatus(
@@ -76,6 +87,11 @@ const RefundDetail = ({ id }: { id: string }) => {
                 <span>{new Date(createdAt).toLocaleDateString()}</span>
                 <span>•</span>
                 <Status value={status} />
+                {isEarlyReturn && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                    Early Return
+                  </span>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -109,35 +125,98 @@ const RefundDetail = ({ id }: { id: string }) => {
                   </p>
                 </div>
               )}
+
+              {isEarlyReturn && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 p-4 rounded-lg space-y-1.5">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-400">
+                    Item was already picked up
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-500">
+                    Platform fees are retained and the security deposit stays on hold
+                    until the damage dispute window closes. Approving refunds each
+                    booking and extension separately.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Right — Refund Breakdown */}
             <div className="space-y-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border">
               <h3 className="text-lg font-semibold text-muted-foreground">{t("breakdown")}</h3>
 
+              {/* Each extension is its own booking with its own PaymentIntent */}
+              {hasExtensions && (
+                <div className="space-y-1.5 pb-2 mb-1 border-b">
+                  {lines.map((line: any) => (
+                    <div key={line.booking} className="flex justify-between text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        {line.refundedAt && (
+                          <CheckCircle2 size={12} className="text-emerald-600" />
+                        )}
+                        {line.isExtension ? "Extension" : "Booking"}
+                      </span>
+                      <span className="text-muted-foreground">
+                        ${line.price?.toFixed(2)} − ${line.deductedAmount?.toFixed(2)} ={" "}
+                        <span className="font-medium text-foreground">
+                          ${line.refundAmount?.toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Refundable Amount</span>
                 <span className="font-medium">${totalRefundAmount?.toFixed(2)}</span>
               </div>
 
+              {deduction > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cancellation Deduction</span>
+                  <span className="text-red-500 font-medium">−${deduction.toFixed(2)}</span>
+                </div>
+              )}
+
               {adminFee > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Admin Fee (returned)</span>
-                  <span className="text-emerald-600 font-medium">+${adminFee.toFixed(2)}</span>
+                  <span className="text-muted-foreground">
+                    Admin Fee {isEarlyReturn ? "(retained)" : "(returned)"}
+                  </span>
+                  {isEarlyReturn ? (
+                    <span className="text-muted-foreground font-medium">${adminFee.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-emerald-600 font-medium">+${adminFee.toFixed(2)}</span>
+                  )}
                 </div>
               )}
 
               {tax > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (returned)</span>
-                  <span className="text-emerald-600 font-medium">+${tax.toFixed(2)}</span>
+                  <span className="text-muted-foreground">
+                    Tax {isEarlyReturn ? "(retained)" : "(returned)"}
+                  </span>
+                  {isEarlyReturn ? (
+                    <span className="text-muted-foreground font-medium">${tax.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-emerald-600 font-medium">+${tax.toFixed(2)}</span>
+                  )}
                 </div>
               )}
 
               {secDep > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Security Deposit (returned)</span>
-                  <span className="text-emerald-600 font-medium">+${secDep.toFixed(2)}</span>
+                  <span className="text-muted-foreground">
+                    Security Deposit {isEarlyReturn ? "(on hold)" : "(returned)"}
+                  </span>
+                  {isEarlyReturn ? (
+                    <span className="text-amber-600 font-medium flex items-center gap-1">
+                      <Clock size={13} />
+                      ${secDep.toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-emerald-600 font-medium">+${secDep.toFixed(2)}</span>
+                  )}
                 </div>
               )}
 

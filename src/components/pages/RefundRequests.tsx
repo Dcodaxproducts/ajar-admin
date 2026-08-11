@@ -49,30 +49,44 @@ const RefundRequests = () => {
   ];
 
   const row = (request: RefundRequest, index: number) => {
-    const totalRefundAmount = request?.totalRefundAmount + request?.booking?.priceDetails?.securityDeposit + request?.booking?.priceDetails?.adminFee + request?.booking?.priceDetails?.tax;
+    const priceDetails = request?.booking?.priceDetails;
+    const refundAmount = request?.totalRefundAmount ?? 0;
+    const securityDeposit = priceDetails?.securityDeposit ?? 0;
+    const adminFee = priceDetails?.adminFee ?? 0;
+    const tax = priceDetails?.tax ?? 0;
+
+    // An early return keeps the platform fee and settles the deposit later
+    // through the dispute window, so only the rental amount is refunded.
+    const isEarlyReturn = Boolean(request?.isEarlyReturn);
+    const totalRefundAmount = isEarlyReturn
+      ? refundAmount
+      : refundAmount + securityDeposit + adminFee + tax;
+
     return (
-    <>
-      <TableCell>{index + 1}</TableCell>
-      <TableCell className="font-medium">
-        {request?.booking?.marketplaceListingId?.name}
-      </TableCell>
-      <TableCell>{request?.user?.name}</TableCell>
-      <TableCell>{new Date(request?.createdAt).toLocaleDateString()}</TableCell>
-      <TableCell>${totalRefundAmount.toFixed(2)}</TableCell>
-      <TableCell>
-        <Status value={request?.status} />
-      </TableCell>
-      <TableCell>
-        <TableActions
-          id={request._id}
-          baseRoute="/refund-management"
-          actions={["view"]}
-          module="Refund"
-        />
-      </TableCell>
-    </>
-  );
-};
+      <>
+        <TableCell>{index + 1}</TableCell>
+        <TableCell className="font-medium">
+          <div className="flex items-center gap-2">
+            <span>{request?.booking?.marketplaceListingId?.name}</span>
+          </div>
+        </TableCell>
+        <TableCell>{request?.user?.name}</TableCell>
+        <TableCell>{new Date(request?.createdAt).toLocaleDateString()}</TableCell>
+        <TableCell>${totalRefundAmount.toFixed(2)}</TableCell>
+        <TableCell>
+          <Status value={request?.status} />
+        </TableCell>
+        <TableCell>
+          <TableActions
+            id={request._id}
+            baseRoute="/refund-management"
+            actions={["view"]}
+            module="Refund"
+          />
+        </TableCell>
+      </>
+    );
+  };
 
   const pagination = {
     total,

@@ -438,6 +438,7 @@ interface RefundRequest {
   };
   createdAt: string;
   totalRefundAmount: number;
+  isEarlyReturn?: boolean;
   status: CommonStatus;
 }
 

@@ -32,14 +32,27 @@ interface CancellationTier {
   label: string;
 }
 
+interface EarlyReturnTier {
+  hoursBeforeCheckOut: number;
+  percentage: number;
+  label: string;
+}
+
 interface RefundPolicyFormValues {
   allowRefund: boolean;
   noteText: string;
   tiers: CancellationTier[];
+  earlyReturnTiers: EarlyReturnTier[];
 }
 
 const DEFAULT_TIER: CancellationTier = {
   hoursBeforeCheckIn: 0,
+  percentage: 0,
+  label: "",
+};
+
+const DEFAULT_EARLY_RETURN_TIER: EarlyReturnTier = {
+  hoursBeforeCheckOut: 0,
   percentage: 0,
   label: "",
 };
@@ -83,6 +96,7 @@ const RefundPoliciesForm = () => {
       allowRefund: false,
       noteText: "",
       tiers: [],
+      earlyReturnTiers: [],
     },
   });
 
@@ -93,15 +107,30 @@ const RefundPoliciesForm = () => {
     name: "tiers",
   });
 
+  const {
+    fields: earlyReturnFields,
+    append: appendEarlyReturnTier,
+    remove: removeEarlyReturnTier,
+  } = useFieldArray({
+    control,
+    name: "earlyReturnTiers",
+  });
+
   useEffect(() => {
     if (refundPolicyData) {
       reset({
         allowRefund: refundPolicyData.allowRefund ?? false,
         noteText: refundPolicyData.noteText ?? "",
         tiers: refundPolicyData.tiers ?? [],
+        earlyReturnTiers: refundPolicyData.earlyReturnTiers ?? [],
       });
     } else {
-      reset({ allowRefund: false, noteText: "", tiers: [] });
+      reset({
+        allowRefund: false,
+        noteText: "",
+        tiers: [],
+        earlyReturnTiers: [],
+      });
     }
   }, [refundPolicyData, reset]);
 
@@ -119,6 +148,11 @@ const RefundPoliciesForm = () => {
         ...values,
         tiers: values.tiers.map((tier) => ({
           hoursBeforeCheckIn: Number(tier.hoursBeforeCheckIn),
+          percentage: Number(tier.percentage),
+          label: tier.label.trim(),
+        })),
+        earlyReturnTiers: values.earlyReturnTiers.map((tier) => ({
+          hoursBeforeCheckOut: Number(tier.hoursBeforeCheckOut),
           percentage: Number(tier.percentage),
           label: tier.label.trim(),
         })),
@@ -277,6 +311,84 @@ const RefundPoliciesForm = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => remove(index)}
+                disabled={disabled}
+                className="text-destructive hover:text-destructive self-end mb-1"
+              >
+                <Trash2 size={18} />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Early return tiers */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <H4>{t("earlyReturnTiers")}</H4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendEarlyReturnTier(DEFAULT_EARLY_RETURN_TIER)}
+              disabled={disabled}
+              className="flex items-center gap-2"
+            >
+              <PlusCircle size={16} />
+              {t("addTier")}
+            </Button>
+          </div>
+
+          {earlyReturnFields.length === 0 && (
+            <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+              {t("noEarlyReturnTiersAdded")}
+            </p>
+          )}
+
+          {earlyReturnFields.map((field, index) => (
+            <div
+              key={field.id}
+              className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end p-4 border rounded-lg"
+            >
+              <TextInput
+                name={`earlyReturnTiers.${index}.hoursBeforeCheckOut`}
+                label="hoursBeforeCheckOut"
+                type="number"
+                control={control}
+                placeholder="0"
+                min={0}
+                rules={{
+                  required: t("requiredField"),
+                  min: { value: 0, message: t("minZero") },
+                }}
+              />
+
+              <TextInput
+                name={`earlyReturnTiers.${index}.percentage`}
+                label="deductionPercentage"
+                type="number"
+                control={control}
+                placeholder="0"
+                min={0}
+                max={100}
+                rules={{
+                  required: t("requiredField"),
+                  min: { value: 0, message: t("minZero") },
+                  max: { value: 100, message: t("max100") },
+                }}
+              />
+
+              <TextInput
+                name={`earlyReturnTiers.${index}.label`}
+                label="tierLabel"
+                type="text"
+                control={control}
+                placeholder={t("eg_earlyReturn")}
+              />
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeEarlyReturnTier(index)}
                 disabled={disabled}
                 className="text-destructive hover:text-destructive self-end mb-1"
               >
