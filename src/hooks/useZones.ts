@@ -39,8 +39,8 @@ export const useAddZone = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: addZone,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["zones"], exact: false });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["zones"], exact: false });
       toast.success("Zone added successfully");
     },
     onError: (error: any) => {

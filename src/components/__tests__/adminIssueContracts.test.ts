@@ -20,6 +20,11 @@ describe("Ajar admin issue contracts", () => {
     expect(page).toContain("normalizedAdminNote.length >= 3");
     expect(page).toContain("maxLength={1000}");
   });
+  it("waits for the active zone list refresh before closing the create dialog", () => {
+    const hook = read("../../hooks/useZones.ts");
+    expect(hook).toContain("onSuccess: async () =>");
+    expect(hook).toContain("await queryClient.invalidateQueries({ queryKey: [\"zones\"]");
+  });
   it("handles a missing refund policy as an empty editable state", () => {
     const service = read("../../services/refundManagement.ts");
     expect(service).toContain("error.response?.status === 404");
