@@ -10,18 +10,23 @@ type GetTicketsResponse = ApiResponse<{
 
 type GetTicketResponse = ApiResponse<Ticket>;
 export type TicketStatusUpdatePayload = {
-  status: string;
+  status: "approved" | "partially_approved" | "rejected";
+  adminNote: string;
   approvedAmount?: number;
 };
 // ✅ Fetch paginated tickets
 export const getTickets = async ({
   page = 1,
   limit = 10,
+  status,
 }: {
   page: number;
   limit: number;
+  status?: "pending" | "approved" | "partially_approved" | "rejected";
 }): Promise<GetTicketsResponse> => {
-  const response = await api.get(`/tickets?page=${page}&limit=${limit}`);
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (status) params.set("status", status);
+  const response = await api.get(`/tickets?${params.toString()}`);
   return response.data;
 };
 

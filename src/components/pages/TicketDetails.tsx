@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useGetTicket, useUpdateTicketStatus } from "@/hooks/useTickets";
 import { format } from "date-fns";
@@ -38,6 +39,7 @@ const TicketDetail = ({ id }: { id: string }) => {
   const { mutate: updateTicketStatus, isPending } = useUpdateTicketStatus();
   const [partialDialogOpen, setPartialDialogOpen] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState("");
+  const [adminNote, setAdminNote] = useState("");
   const [pendingAction, setPendingAction] = useState<TicketAction | null>(null);
   const ticket = data?.data;
 
@@ -49,6 +51,8 @@ const TicketDetail = ({ id }: { id: string }) => {
   const securityDeposit = Number(booking?.priceDetails?.securityDeposit || 0);
   const partialAmount = Number(approvedAmount);
   const isPartialAmountValid = partialAmount > 0 && partialAmount <= securityDeposit;
+  const normalizedAdminNote = adminNote.trim();
+  const isAdminNoteValid = normalizedAdminNote.length >= 3 && normalizedAdminNote.length <= 1000;
 
   // renter and leaser from populated booking
   const renter = booking?.renter;
@@ -71,10 +75,14 @@ const TicketDetail = ({ id }: { id: string }) => {
       toast.error(t("partialApprovalAmountError"));
       return;
     }
+    if (!isAdminNoteValid) {
+      toast.error(t("resolutionReasonRequirements"));
+      return;
+    }
 
     setPendingAction("partially_approved");
     updateTicketStatus(
-      { id, status: "partially_approved", approvedAmount: partialAmount },
+      { id, status: "partially_approved", approvedAmount: partialAmount, adminNote: normalizedAdminNote },
       {
         onSuccess: () => {
           setPartialDialogOpen(false);
@@ -86,9 +94,13 @@ const TicketDetail = ({ id }: { id: string }) => {
   };
 
   const handleStatusUpdate = (nextStatus: "approved" | "rejected") => {
+    if (!isAdminNoteValid) {
+      toast.error(t("resolutionReasonRequirements"));
+      return;
+    }
     setPendingAction(nextStatus);
     updateTicketStatus(
-      { id, status: nextStatus },
+      { id, status: nextStatus, adminNote: normalizedAdminNote },
       { onSettled: () => setPendingAction(null) }
     );
   };
@@ -238,8 +250,20 @@ const TicketDetail = ({ id }: { id: string }) => {
               {t("ticketActionNote")}
             </p>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="adminNote">{t("resolutionReason")}</Label>
+            <Textarea
+              id="adminNote"
+              value={adminNote}
+              onChange={(event) => setAdminNote(event.target.value)}
+              placeholder={t("resolutionReasonPlaceholder")}
+              className="min-h-24"
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground">{t("resolutionReasonRequirements")}</p>
+          </div>
           <div className="flex flex-wrap justify-end gap-3">
-            <Button onClick={() => handleStatusUpdate("rejected")} disabled={isPending} variant="destructive">
+            <Button onClick={() => handleStatusUpdate("rejected")} disabled={isPending || !isAdminNoteValid} variant="destructive">
               {pendingAction === "rejected" ? t("processing") : t("reject")}
             </Button>
             <Dialog open={partialDialogOpen} onOpenChange={setPartialDialogOpen}>
@@ -278,13 +302,13 @@ const TicketDetail = ({ id }: { id: string }) => {
                   <Button type="button" variant="outline" onClick={() => setPartialDialogOpen(false)}>
                     {t("cancel")}
                   </Button>
-                  <Button type="button" onClick={handlePartialApproval} disabled={isPending || !isPartialAmountValid} variant="success">
+                  <Button type="button" onClick={handlePartialApproval} disabled={isPending || !isPartialAmountValid || !isAdminNoteValid} variant="success">
                     {pendingAction === "partially_approved" ? t("processing") : t("submit")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-            <Button onClick={() => handleStatusUpdate("approved")} disabled={isPending} variant="success">
+            <Button onClick={() => handleStatusUpdate("approved")} disabled={isPending || !isAdminNoteValid} variant="success">
               {pendingAction === "approved" ? t("processing") : t("approve")}
             </Button>
           </div>

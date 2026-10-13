@@ -23,6 +23,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import ListingReviewParameters from "@/components/ListingReviewParameters";
+import type { ListingParameter } from "@/types";
 
 type ListingDocument = {
   _id: string;
@@ -49,7 +51,6 @@ const RentalListingDetail = ({ id }: { id: string }) => {
 
   if (isLoading) return <Loader />;
   if (error) return <ResponseError error={error.message} />;
-console.log(rentalRequest?.data)
   const {
     name,
     subTitle,
@@ -68,6 +69,7 @@ console.log(rentalRequest?.data)
     documents,
     unavailability,
     dynamicPricing,
+    parameters,
   }: {
     name?: string;
     subTitle?: string;
@@ -86,13 +88,14 @@ console.log(rentalRequest?.data)
     documents?: ListingDocument[];
     unavailability?: string[];
     dynamicPricing?: DynamicPricing | DynamicPricing[];
+    parameters?: ListingParameter[];
   } = rentalRequest?.data || {};
   const cleanedData = removeFields(rentalRequest?.data as any, [
     "_id", "leaser", "subCategory", "zone", "ratings", "name", "subTitle",
     "images", "rentalImages", "description", "price", "isActive", "language",
     "documents", "isAvailable", "currentBookingId", "status", "priceUnit",
     "createdAt", "updatedAt", "__v", "userDocuments", "leaserDocuments",
-    "adminFee", "tax", "languages", "averageRating", "totalReviews", "rejectionNote", "location", "refundNote", "refundNote", "bookings", "reviews", "unavailability", "dynamicPricing", "dropoffLocation", "timezone", "rentalPolicy"
+    "adminFee", "tax", "languages", "averageRating", "totalReviews", "rejectionNote", "location", "refundNote", "refundNote", "bookings", "reviews", "unavailability", "dynamicPricing", "dropoffLocation", "timezone", "rentalPolicy", "parameters", "approvalStatus"
   ]);
   const detailEntries = Object.entries(cleanedData).filter(([, value]) =>
     hasDisplayValue(value)
@@ -175,6 +178,8 @@ console.log(rentalRequest?.data)
               </p>
             </div>
           )}
+
+          <ListingReviewParameters parameters={parameters ?? []} />
 
           {detailEntries.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">

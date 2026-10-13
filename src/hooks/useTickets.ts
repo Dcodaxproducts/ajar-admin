@@ -13,13 +13,15 @@ import { toast } from "sonner";
 export const useGetTickets = ({
   page = 1,
   limit = 10,
+  status,
 }: {
   page: number;
   limit: number;
+  status?: "pending" | "approved" | "partially_approved" | "rejected";
 }) => {
   return useQuery({
-    queryKey: ["tickets", page, limit],
-    queryFn: () => getTickets({ page, limit }),
+    queryKey: ["tickets", page, limit, status],
+    queryFn: () => getTickets({ page, limit, status }),
     placeholderData: (prev) => prev,
   });
 };

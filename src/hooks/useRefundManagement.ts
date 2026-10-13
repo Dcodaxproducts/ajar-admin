@@ -8,6 +8,8 @@ import {
 } from "@/services/refundManagement";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import type { RefundPolicyPayload } from "@/lib/refundPolicy";
 
 export const useGetRefundRequests = (page: number, limit: number) => {
   return useQuery({
@@ -72,6 +74,7 @@ export const useGetRefundPolicy = (zone: string, subCategory: string) => {
 
 export const useSaveRefundPolicy = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("translation");
   return useMutation({
     mutationFn: ({
       zone,
@@ -80,15 +83,15 @@ export const useSaveRefundPolicy = () => {
     }: {
       zone: string;
       subCategory: string;
-      data: any;
+      data: RefundPolicyPayload;
     }) => saveRefundPolicy({ zone, subCategory, data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["refund-policies"] });
-      toast.success("Refund policy saved successfully");
+    onSuccess: (_, { zone, subCategory }) => {
+      queryClient.invalidateQueries({ queryKey: ["refund-policy", zone, subCategory] });
+      toast.success(t("refundPolicySaved"));
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || "Failed to save refund policy"
+        error?.response?.data?.message || t("failedToSaveRefundPolicy")
       );
     },
   });

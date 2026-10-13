@@ -552,6 +552,18 @@ type Ratings = {
   average: number;
 };
 
+interface ListingParameter {
+  key: string;
+  label: string;
+  type: string;
+  value: unknown;
+  displayValue?: unknown;
+  order: number;
+  isMultiple: boolean;
+  options?: unknown[];
+  optionItems?: Array<{ value: unknown; label: string }>;
+}
+
 interface RentalListing {
   _id: string;
   name: string;
@@ -565,6 +577,8 @@ interface RentalListing {
   isActive: boolean;
   language: string;
   status: CommonStatus;
+  approvalStatus?: CommonStatus;
+  parameters?: ListingParameter[];
   zone: Zone;
   ratings: Ratings;
   leaser: User;
