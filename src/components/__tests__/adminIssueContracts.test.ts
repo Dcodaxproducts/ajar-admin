@@ -36,6 +36,13 @@ describe("Ajar admin issue contracts", () => {
     expect(form).not.toContain("daysBeforeCheckIn");
     expect(form).toContain("validateTierThresholds");
   });
+  it("unwraps field mutation envelopes and invalidates every field list cache", () => {
+    const hook = read("../../hooks/useFields.ts");
+    expect(hook).toContain("onSuccess: ({ data }: FieldResponse)");
+    expect(hook).toContain("queryKey: [\"fields\"]");
+    expect(hook).toContain("queryKey: [\"fields-list\"]");
+    expect(hook).toContain("queryKey: [\"choice-fields-list\"]");
+  });
   it("keeps English and Arabic translation keys in parity", () => {
     const en = JSON.parse(read("../../messages/en.json"));
     const ar = JSON.parse(read("../../messages/ar.json"));

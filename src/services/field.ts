@@ -4,7 +4,8 @@ import { api } from "@/lib/axios";
 import { ApiResponse, Field, Pagination } from "@/types";
 type GetFieldsListResponse = ApiResponse<Pagination & { fields: Field[] }>;
 
-type FieldResponse = ApiResponse<Field>;
+export type FieldResponse = ApiResponse<Field>;
+export type FieldMutationPayload = Partial<Field>;
 
 export const getFields = async ({
   page,
@@ -22,7 +23,7 @@ export const getFieldsList = async ({
 }: {
   isChoiceField?: boolean;
 }): Promise<GetFieldsListResponse> => {
-  const params: any = {};
+  const params: { isChoiceField?: boolean } = {};
   if (isChoiceField !== undefined) {
     params.isChoiceField = isChoiceField;
   }
@@ -35,17 +36,17 @@ export const getField = async (fieldId: string): Promise<FieldResponse> => {
   return response.data;
 };
 
-export const addField = async (fieldData: any) => {
+export const addField = async (fieldData: FieldMutationPayload): Promise<FieldResponse> => {
   const response = await api.post("/fields", fieldData);
   return response.data;
 };
 
-export const updateField = async (fieldId: string, fieldData: any) => {
+export const updateField = async (fieldId: string, fieldData: FieldMutationPayload): Promise<FieldResponse> => {
   const response = await api.patch(`/fields/${fieldId}`, fieldData);
   return response.data;
 };
 
-export const deleteField = async (fieldId: string) => {
+export const deleteField = async (fieldId: string): Promise<FieldResponse> => {
   const response = await api.delete(`/fields/${fieldId}`);
   return response.data;
 };
