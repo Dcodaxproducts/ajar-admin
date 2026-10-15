@@ -19,10 +19,18 @@ const errorMessage = (error: unknown) => {
   return axiosError.response?.data?.message || "Something went wrong";
 };
 
-export const useGetFields = ({ page = 1, limit = 10 }: { page: number; limit: number }) =>
+export const useGetFields = ({
+  page = 1,
+  limit = 10,
+  search = "",
+}: {
+  page: number;
+  limit: number;
+  search?: string;
+}) =>
   useQuery({
-    queryKey: ["fields", page, limit],
-    queryFn: () => getFields({ page, limit }),
+    queryKey: ["fields", page, limit, search],
+    queryFn: () => getFields({ page, limit, search }),
     placeholderData: (previousData) => previousData,
   });
 

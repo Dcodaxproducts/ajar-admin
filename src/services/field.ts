@@ -10,11 +10,13 @@ export type FieldMutationPayload = Partial<Field>;
 export const getFields = async ({
   page,
   limit,
+  search,
 }: {
   page: number;
   limit: number;
+  search?: string;
 }): Promise<GetFieldsListResponse> => {
-  const response = await api.get("/fields", { params: { page, limit } });
+  const response = await api.get("/fields", { params: { page, limit, search } });
   return response.data;
 };
 
@@ -23,7 +25,10 @@ export const getFieldsList = async ({
 }: {
   isChoiceField?: boolean;
 }): Promise<GetFieldsListResponse> => {
-  const params: { isChoiceField?: boolean } = {};
+  const params: { isChoiceField?: boolean; page: number; limit: number } = {
+    page: 1,
+    limit: 200,
+  };
   if (isChoiceField !== undefined) {
     params.isChoiceField = isChoiceField;
   }

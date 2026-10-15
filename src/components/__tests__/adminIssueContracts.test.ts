@@ -43,6 +43,15 @@ describe("Ajar admin issue contracts", () => {
     expect(hook).toContain("queryKey: [\"fields-list\"]");
     expect(hook).toContain("queryKey: [\"choice-fields-list\"]");
   });
+  it("searches fields across server-side pagination with an isolated query cache", () => {
+    const service = read("../../services/field.ts");
+    const hook = read("../../hooks/useFields.ts");
+    const page = read("../pages/Fields.tsx");
+    expect(service).toContain("params: { page, limit, search }");
+    expect(hook).toContain('queryKey: ["fields", page, limit, search]');
+    expect(page).toContain("useGetFields({ page, limit, search })");
+    expect(page).toContain("setPage(1)");
+  });
   it("keeps English and Arabic translation keys in parity", () => {
     const en = JSON.parse(read("../../messages/en.json"));
     const ar = JSON.parse(read("../../messages/ar.json"));

@@ -3,8 +3,7 @@
 import { TableCell } from "@/components/ui/table";
 import { limit } from "@/config/constants";
 import { useDeleteField, useGetFields } from "@/hooks/useFields";
-import { filterData } from "@/utils/filterData";
-import { useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import TableActions from "../Actions";
 import { DataTable } from "../custom/DataTable";
 import { SearchInput } from "../custom/SearchInput";
@@ -15,18 +14,13 @@ import TableSkeleton from "../skeletons/TableSkeleton";
 const Fields = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const { data, isLoading, error } = useGetFields({ page, limit });
+  const { data, isLoading, error } = useGetFields({ page, limit, search });
   const { mutate: deleteField, isPending: deleteLoading } = useDeleteField();
   const cols = ["label", "name", "type", "actions"];
-
-  const filteredFields = useMemo(() => {
-    const fields = data?.data?.fields || [];
-    return filterData({
-      data: fields,
-      search,
-      searchKeys: ["label", "name"],
-    });
-  }, [data, search]);
+  const handleSearch = useCallback((value: string) => {
+    setSearch(value);
+    setPage(1);
+  }, []);
 
   if (isLoading) {
     return <TableSkeleton cols={cols.length} rows={10} />;
@@ -65,12 +59,12 @@ const Fields = () => {
       <div className="flex items-center justify-end">
         <SearchInput
           className="w-full"
-          onChange={(e) => setSearch(e)}
+          onChange={handleSearch}
           placeholder="searchField"
         />
       </div>
       <DataTable
-        data={filteredFields}
+        data={data?.data?.fields || []}
         cols={cols}
         row={row}
         pagination={{
