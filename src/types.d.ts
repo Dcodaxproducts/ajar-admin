@@ -210,6 +210,7 @@ interface ZoneForm {
   slug?: string;
   createdAt?: string;
   updatedAt?: string;
+  version?: number;
 }
 
 interface ZoneLanguage {

@@ -1,6 +1,15 @@
 {
   "translation": {
-    "reminderSettings": "Reminder Settings"
+    "reminderSettings": "Reminder Settings",
+    "fieldOrderTitle": "Mobile field order",
+    "fieldOrderDescription": "Drag fields into the order used in the mobile form, or use the move buttons.",
+    "dragField": "Drag {label} to reorder",
+    "moveFieldUp": "Move {label} up",
+    "moveFieldDown": "Move {label} down",
+    "savingFieldOrder": "Saving field order…",
+    "noFieldsToOrder": "Select fields to arrange their mobile order.",
+    "fieldOrderSaved": "Field order saved",
+    "fieldOrderSaveFailed": "Could not save the field order. The previous order was restored."
   },
   "navigation": {
     "home": "Startseite",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import CommissionInputs from "../forms/fields/CommissionInputs";
 import DateInput from "../forms/fields/DateInput";
 import TextInput from "../forms/fields/TextInput";
@@ -14,15 +14,17 @@ import {
   useAddZoneForm,
   useGetZoneFormByZoneAndSubCategory,
   useUpdateZoneForm,
+  useReorderZoneFormFields,
 } from "@/hooks/useZoneForms";
 import { Field } from "@/types";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MultiSelect from "../forms/fields/MultiSelect";
 import { zoneFormSchema, ZoneFormValues } from "@/validations/zoneSettings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import FormFieldOrderer, { type OrderedField } from "../forms/FormFieldOrderer";
 
 const ZoneSettings = () => {
   const t = useTranslations();
@@ -63,6 +65,7 @@ const SubcategorySettingsForm = ({
 }) => {
   const t = useTranslations(); // Initialize translation
   const router = useRouter();
+  const [formVersion, setFormVersion] = useState(0);
 
   const defaultValues: ZoneFormValues = useMemo(
     () => ({
@@ -85,10 +88,11 @@ const SubcategorySettingsForm = ({
   );
 
 
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<ZoneFormValues>({
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<ZoneFormValues>({
     defaultValues,
     resolver: zodResolver(zoneFormSchema),
   });
+  const selectedFieldIds = useWatch({ control, name: "fields" }) || [];
 
   const { data: documents, isLoading: documentsLoading } =
     useGetDropdownByName("userDocuments");
@@ -113,6 +117,7 @@ const SubcategorySettingsForm = ({
     if (!zoneForm?.data) return;
 
     const { name, description, fields = [], setting } = zoneForm.data;
+    setFormVersion(zoneForm.data.version || 0);
     
     const {
       commissionType,
@@ -122,21 +127,9 @@ const SubcategorySettingsForm = ({
       expiry,
     } = setting;
 
-    // Extract field IDs, and also include dependsOn parent IDs for conditional fields
-    const fieldIds: string[] = [];
-    fields.forEach((f: any) => {
-      // Add the parent (dependsOn) first if it exists and isn't already added
-      if (f.conditional?.dependsOn?._id) {
-        const parentId = f.conditional.dependsOn._id;
-        if (!fieldIds.includes(parentId)) {
-          fieldIds.push(parentId);
-        }
-      }
-      // Then add the field itself
-      if (!fieldIds.includes(f._id)) {
-        fieldIds.push(f._id);
-      }
-    });
+    // Form.fields is the canonical persisted sequence. Embedded dependency
+    // records are labels/helpers only and must never leak into a reorder payload.
+    const fieldIds = fields.map((field: OrderedField) => field._id);
 
     reset({
       zone: zoneId,
@@ -167,7 +160,12 @@ const SubcategorySettingsForm = ({
     error: addError,
   } = useAddZoneForm();
 
-  const loading = updating || adding;
+  const {
+    mutateAsync: reorderZoneFormFields,
+    isPending: reordering,
+  } = useReorderZoneFormFields();
+
+  const loading = updating || adding || reordering;
   const error = updateError || addError;
 
   const onSubmit = async (data: any) => {
@@ -186,17 +184,60 @@ const SubcategorySettingsForm = ({
       enabled: shouldFetchFields,
     });
 
-  const fields: Field[] = fieldsData?.data?.fields?.filter(
-    (f: Field) => !f.isFixed
-  ) || [];
+  const allFields = useMemo(() => {
+    const fields: Field[] =
+      fieldsData?.data?.fields?.filter((field: Field) => !field.isFixed) || [];
+    const existingIds = new Set(fields.map((field) => field._id));
+    const parentFields: Field[] = fields
+      .filter(
+        (field: any) =>
+          field.conditional?.dependsOn &&
+          !existingIds.has(field.conditional.dependsOn._id)
+      )
+      .map((field: any) => field.conditional.dependsOn);
+    return [...fields, ...parentFields];
+  }, [fieldsData?.data?.fields]);
+  const orderedFieldOptions = useMemo(() => {
+    const byId = new Map<string, OrderedField>();
+    [...(zoneForm?.data?.fields || []), ...allFields].forEach((field: OrderedField) => {
+      byId.set(field._id, field);
+    });
+    return Array.from(byId.values());
+  }, [zoneForm?.data?.fields, allFields]);
 
-  // Also collect dependsOn parents that aren't top-level fields
-  const existingIds = new Set(fields.map((f: any) => f._id));
-  const parentFields: Field[] = fields
-    .filter((f: any) => f.conditional?.dependsOn && !existingIds.has(f.conditional.dependsOn._id))
-    .map((f: any) => f.conditional.dependsOn);
+  const persistFieldOrder = useCallback(
+    async (fieldIds: string[]) => {
+      const formId = zoneForm?.data?._id;
+      const persistedIds = (zoneForm?.data?.fields || []).map(
+        (field: OrderedField) => field._id
+      );
+      const sameMembership =
+        persistedIds.length === fieldIds.length &&
+        fieldIds.every((fieldId) => persistedIds.includes(fieldId));
+      if (!formId || !sameMembership) return false;
+      const response = await reorderZoneFormFields({
+        id: formId,
+        fieldIds,
+        version: formVersion,
+      });
+      setFormVersion(response.data.version);
+      return true;
+    },
+    [formVersion, reorderZoneFormFields, zoneForm?.data?._id, zoneForm?.data?.fields]
+  );
 
-  const allFields: Field[] = [...fields, ...parentFields];
+  const fieldOrderLabels = useMemo(
+    () => ({
+      title: t("translation.fieldOrderTitle"),
+      description: t("translation.fieldOrderDescription"),
+      drag: (label: string) => t("translation.dragField", { label }),
+      moveUp: (label: string) => t("translation.moveFieldUp", { label }),
+      moveDown: (label: string) => t("translation.moveFieldDown", { label }),
+      saving: t("translation.savingFieldOrder"),
+      empty: t("translation.noFieldsToOrder"),
+    }),
+    [t]
+  );
 
   const handleFieldRemove = (removedId: string, currentValues: string[]) => {
     // Check: kya removedId kisi selected child ka parent hai?
@@ -262,6 +303,18 @@ const SubcategorySettingsForm = ({
           onBeforeAdd={handleFieldAdd}
         />
         {errors.fields && <p className="text-red-500 text-sm">{errors.fields.message}</p>}
+        <FormFieldOrderer
+          fieldIds={selectedFieldIds}
+          fields={orderedFieldOptions}
+          disabled={loading}
+          labels={fieldOrderLabels}
+          onChange={(fieldIds) =>
+            setValue("fields", fieldIds, { shouldDirty: true, shouldValidate: true })
+          }
+          onPersist={persistFieldOrder}
+          onSuccess={() => toast.success(t("translation.fieldOrderSaved"))}
+          onError={() => toast.error(t("translation.fieldOrderSaveFailed"))}
+        />
         {documentsValues.length > 0 && (
           <> <MultiSelect<{ name: string; value: string }, ZoneFormValues>
             control={control}

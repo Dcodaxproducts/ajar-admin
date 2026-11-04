@@ -57,3 +57,22 @@ export const deleteZoneForm = async (formId: string) => {
   const response = await api.delete(`/forms/${formId}`);
   return response.data;
 };
+
+
+export type ReorderZoneFormFieldsResponse = ApiResponse<{
+  _id: string;
+  version: number;
+  fields: Array<{ fieldId: string; order: number }>;
+}>;
+
+export const reorderZoneFormFields = async (
+  formId: string,
+  fieldIds: string[],
+  version: number
+): Promise<ReorderZoneFormFieldsResponse> => {
+  const response = await api.patch(`/forms/${formId}/fields/order`, {
+    fieldIds,
+    version,
+  });
+  return response.data;
+};

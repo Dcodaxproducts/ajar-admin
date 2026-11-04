@@ -603,7 +603,16 @@
     "enterPrivacyPolicyContent": "أدخل محتوى سياسة الخصوصية هنا... (HTML مدعوم)",
     "preview": "معاينة",
     "hasExpiry": "يحتوي على تاريخ انتهاء",
-    "autoApproval": "موافقة تلقائية"
+    "autoApproval": "موافقة تلقائية",
+    "fieldOrderTitle": "ترتيب الحقول في التطبيق",
+    "fieldOrderDescription": "اسحب الحقول إلى الترتيب المستخدم في نموذج التطبيق، أو استخدم أزرار التحريك.",
+    "dragField": "اسحب {label} لإعادة الترتيب",
+    "moveFieldUp": "نقل {label} إلى الأعلى",
+    "moveFieldDown": "نقل {label} إلى الأسفل",
+    "savingFieldOrder": "جارٍ حفظ ترتيب الحقول…",
+    "noFieldsToOrder": "اختر الحقول لترتيب ظهورها في التطبيق.",
+    "fieldOrderSaved": "تم حفظ ترتيب الحقول",
+    "fieldOrderSaveFailed": "تعذر حفظ ترتيب الحقول. تمت استعادة الترتيب السابق."
   },
   "confirm": {
     "logout": {
