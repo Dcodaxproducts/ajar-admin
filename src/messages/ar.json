@@ -557,6 +557,8 @@
     "requiredField": "هذا الحقل مطلوب",
     "minZero": "يجب أن تكون القيمة 0 على الأقل",
     "max100": "يجب ألا تتجاوز القيمة 100",
+    "wholeNumbersRequired": "يجب أن تكون الساعات والنسب المئوية أعدادًا صحيحة",
+    "duplicateCancellationHours": "يجب أن تكون حدود ساعات الإلغاء فريدة",
     "expired": "منتهي الصلاحية",
     "expiringSoon": "الصلاحية قادمة",
     "extensionPolicy": "سياسة التمديد",

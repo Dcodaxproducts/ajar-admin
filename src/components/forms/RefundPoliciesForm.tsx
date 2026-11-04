@@ -23,14 +23,13 @@ import Switch from "./fields/Switch";
 import TextInput from "./fields/TextInput";
 import { useTranslations } from "next-intl";
 import { Trash2, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
+import {
+  validateCancellationTiers,
+  type CancellationTier,
+} from "@/lib/refundPolicy";
 
 // ─── types ───────────────────────────────────────────────────────────────────
-
-interface CancellationTier {
-  hoursBeforeCheckIn: number;
-  percentage: number;
-  label: string;
-}
 
 interface EarlyReturnTier {
   hoursBeforeCheckOut: number;
@@ -140,6 +139,11 @@ const RefundPoliciesForm = () => {
 
   const onSubmit = async (values: RefundPolicyFormValues) => {
     if (!zone || !subCategory) return;
+    const validationKey = validateCancellationTiers(values.tiers);
+    if (validationKey) {
+      toast.error(t(validationKey));
+      return;
+    }
 
     await saveRefundPolicy({
       zone,
@@ -277,9 +281,12 @@ const RefundPoliciesForm = () => {
                 control={control}
                 placeholder="0"
                 min={0}
+                step={1}
                 rules={{
                   required: t("requiredField"),
                   min: { value: 0, message: t("minZero") },
+                  validate: (value) =>
+                    Number.isSafeInteger(Number(value)) || t("wholeNumbersRequired"),
                 }}
               />
 
@@ -291,10 +298,13 @@ const RefundPoliciesForm = () => {
                 placeholder="0"
                 min={0}
                 max={100}
+                step={1}
                 rules={{
                   required: t("requiredField"),
                   min: { value: 0, message: t("minZero") },
                   max: { value: 100, message: t("max100") },
+                  validate: (value) =>
+                    Number.isSafeInteger(Number(value)) || t("wholeNumbersRequired"),
                 }}
               />
 

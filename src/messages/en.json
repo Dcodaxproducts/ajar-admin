@@ -560,6 +560,8 @@
     "requiredField": "This field is required",
     "minZero": "Value must be at least 0",
     "max100": "Value must not exceed 100",
+    "wholeNumbersRequired": "Hours and percentages must be whole numbers",
+    "duplicateCancellationHours": "Cancellation hour thresholds must be unique",
     "expired": "Expired",
     "expiringSoon": "Expiring Soon",
     "extensionPolicy": "Extension Policy",
