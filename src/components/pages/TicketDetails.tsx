@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGetTicket, useUpdateTicketStatus } from "@/hooks/useTickets";
+import { useDecideTicket, useGetTicket } from "@/hooks/useTickets";
 import { format } from "date-fns";
 import TicketDetailSkeleton from "../skeletons/TicketSkeleton";
 import { useTranslations } from "next-intl";
@@ -29,15 +29,16 @@ import {
   AlertCircle, Mail, FileText, Paperclip, Users,
 } from "lucide-react";
 
-type TicketAction = "approved" | "rejected" | "partially_approved";
+type TicketAction = "approved" | "rejected";
 
 const TicketDetail = ({ id }: { id: string }) => {
   const t = useTranslations("translation");
   const tStatus = useTranslations("status");
   const { data, isLoading, error } = useGetTicket(id, true);
-  const { mutate: updateTicketStatus, isPending } = useUpdateTicketStatus();
+  const { mutate: decideTicket, isPending } = useDecideTicket();
   const [partialDialogOpen, setPartialDialogOpen] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState("");
+  const [decisionReason, setDecisionReason] = useState("");
   const [pendingAction, setPendingAction] = useState<TicketAction | null>(null);
   const ticket = data?.data;
 
@@ -48,7 +49,18 @@ const TicketDetail = ({ id }: { id: string }) => {
   const { booking, rentalText, issueType, damagedCharges, attachments, status, createdAt } = ticket;
   const securityDeposit = Number(booking?.priceDetails?.securityDeposit || 0);
   const partialAmount = Number(approvedAmount);
-  const isPartialAmountValid = partialAmount > 0 && partialAmount <= securityDeposit;
+  const isPartialAmountValid = partialAmount > 0 && partialAmount <= securityDeposit && partialAmount <= Number(damagedCharges || 0);
+  const isReasonValid = decisionReason.trim().length >= 3;
+  const decisionPayload = (decision: "approved" | "rejected", amount: number) => ({
+    id,
+    decision,
+    reason: decisionReason.trim(),
+    approvedAmount: amount,
+    currency: "SAR" as const,
+    evidenceReferences: attachments || [],
+    expectedVersion: ticket.version || 0,
+    idempotencyKey: crypto.randomUUID().replaceAll("-", ""),
+  });
 
   // renter and leaser from populated booking
   const renter = booking?.renter;
@@ -67,14 +79,14 @@ const TicketDetail = ({ id }: { id: string }) => {
   };
 
   const handlePartialApproval = () => {
-    if (!isPartialAmountValid) {
+    if (!isPartialAmountValid || !isReasonValid) {
       toast.error(t("partialApprovalAmountError"));
       return;
     }
 
-    setPendingAction("partially_approved");
-    updateTicketStatus(
-      { id, status: "partially_approved", approvedAmount: partialAmount },
+    setPendingAction("approved");
+    decideTicket(
+      decisionPayload("approved", partialAmount),
       {
         onSuccess: () => {
           setPartialDialogOpen(false);
@@ -85,12 +97,19 @@ const TicketDetail = ({ id }: { id: string }) => {
     );
   };
 
-  const handleStatusUpdate = (nextStatus: "approved" | "rejected") => {
-    setPendingAction(nextStatus);
-    updateTicketStatus(
-      { id, status: nextStatus },
-      { onSettled: () => setPendingAction(null) }
-    );
+  const handleStatusUpdate = (decision: "approved" | "rejected") => {
+    if (!isReasonValid) {
+      toast.error(t("decisionReasonRequired"));
+      return;
+    }
+    const amount = decision === "approved" ? Math.min(Number(damagedCharges || 0), securityDeposit) : 0;
+    if (decision === "approved" && amount <= 0) {
+      toast.error(t("partialApprovalAmountError"));
+      return;
+    }
+    if (!window.confirm(t(decision === "approved" ? "confirmApproveDecision" : "confirmRejectDecision"))) return;
+    setPendingAction(decision);
+    decideTicket(decisionPayload(decision, amount), { onSettled: () => setPendingAction(null) });
   };
 
   return (
@@ -238,6 +257,13 @@ const TicketDetail = ({ id }: { id: string }) => {
               {t("ticketActionNote")}
             </p>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="decisionReason">{t("decisionReason")}</Label>
+            <Input id="decisionReason" value={decisionReason} maxLength={2000}
+              onChange={(event) => setDecisionReason(event.target.value)}
+              placeholder={t("decisionReasonPlaceholder")} aria-invalid={!isReasonValid && decisionReason.length > 0} />
+            <p className="text-xs text-muted-foreground">{t("paymentPendingStory3")}</p>
+          </div>
           <div className="flex flex-wrap justify-end gap-3">
             <Button onClick={() => handleStatusUpdate("rejected")} disabled={isPending} variant="destructive">
               {pendingAction === "rejected" ? t("processing") : t("reject")}
@@ -278,8 +304,8 @@ const TicketDetail = ({ id }: { id: string }) => {
                   <Button type="button" variant="outline" onClick={() => setPartialDialogOpen(false)}>
                     {t("cancel")}
                   </Button>
-                  <Button type="button" onClick={handlePartialApproval} disabled={isPending || !isPartialAmountValid} variant="success">
-                    {pendingAction === "partially_approved" ? t("processing") : t("submit")}
+                  <Button type="button" onClick={handlePartialApproval} disabled={isPending || !isPartialAmountValid || !isReasonValid} variant="success">
+                    {pendingAction === "approved" ? t("processing") : t("submit")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

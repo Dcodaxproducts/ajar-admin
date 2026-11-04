@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeleteTicket, useGetTickets } from "@/hooks/useTickets";
+import { useGetTickets } from "@/hooks/useTickets";
 import { Ticket } from "@/types";
 import { filterData } from "@/utils/filterData";
 import { useMemo, useState } from "react";
@@ -14,12 +14,14 @@ import { TableCell } from "../ui/table";
 import Status from "../StatusBadge";
 import Link from "next/link";
 import HighlightCell from "../HighlightCell";
+import { useTranslations } from "next-intl";
 
 const TicketsList = () => {
+  const t = useTranslations("translation");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const { data, isLoading, error } = useGetTickets({ page, limit: 10 });
-  const { mutate: deleteTicket, isPending: deleteLoading } = useDeleteTicket();
+  const [status, setStatus] = useState("");
+  const { data, isLoading, error } = useGetTickets({ page, limit: 10, status: status || undefined });
 
   const tickets = useMemo(() => {
     const raw = data?.data?.tickets || [];
@@ -82,15 +84,7 @@ const TicketsList = () => {
             id={ticket._id}
             baseRoute="/tickets"
             module="ticket"
-            actions={["delete"]}
-            onDelete={(id, closeDialog) =>
-              deleteTicket(id, {
-                onSuccess: () => {
-                  closeDialog();
-                },
-              })
-            }
-            deleteLoading={deleteLoading}
+            actions={["view"]}
           />
         </TableCell>
       </>
@@ -99,11 +93,15 @@ const TicketsList = () => {
 
   return (
     <div>
-      <SearchInput
-        className="w-full ml-auto"
-        onChange={(e) => setSearch(e)}
-        placeholder="searchTicket"
-      />
+      <div className="flex flex-col gap-3 sm:flex-row" dir="auto">
+        <SearchInput className="w-full ml-auto" onChange={(e) => setSearch(e)} placeholder="searchTicket" />
+        <label className="sr-only" htmlFor="ticket-status-filter">{t("status")}</label>
+        <select id="ticket-status-filter" className="h-10 rounded-md border bg-background px-3" value={status}
+          onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
+          <option value="">{t("allStatuses")}</option><option value="pending">{t("pendingAdminReview")}</option>
+          <option value="approved">{t("approve")}</option><option value="rejected">{t("reject")}</option>
+        </select>
+      </div>
       <DataTable
         cols={cols}
         data={tickets}

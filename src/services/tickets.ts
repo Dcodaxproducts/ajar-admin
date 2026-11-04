@@ -9,19 +9,28 @@ type GetTicketsResponse = ApiResponse<{
 }>;
 
 type GetTicketResponse = ApiResponse<Ticket>;
-export type TicketStatusUpdatePayload = {
-  status: string;
-  approvedAmount?: number;
+export type TicketDecisionPayload = {
+  decision: "approved" | "rejected";
+  reason: string;
+  approvedAmount: number;
+  currency: "SAR";
+  evidenceReferences: string[];
+  expectedVersion: number;
+  idempotencyKey: string;
 };
 // ✅ Fetch paginated tickets
 export const getTickets = async ({
   page = 1,
   limit = 10,
+  status,
 }: {
   page: number;
   limit: number;
+  status?: string;
 }): Promise<GetTicketsResponse> => {
-  const response = await api.get(`/tickets?page=${page}&limit=${limit}`);
+  const params = new URLSearchParams({ page: String(page), limit: String(Math.min(limit, 50)) });
+  if (status) params.set("status", status);
+  const response = await api.get(`/tickets?${params.toString()}`);
   return response.data;
 };
 
@@ -40,11 +49,11 @@ export const addTicket = async (ticketData: Partial<Ticket>) => {
 };
 
 // ✅ Update a ticket
-export const updateTicketStatus = async (
+export const decideTicket = async (
   ticketId: string,
-  ticketData: TicketStatusUpdatePayload
+  decision: TicketDecisionPayload
 ) => {
-  const response = await api.patch(`/tickets/${ticketId}/status`, ticketData);
+  const response = await api.post(`/tickets/${ticketId}/decision`, decision);
   return response.data;
 };
 

@@ -3,9 +3,9 @@ import {
   getTicket,
   addTicket,
   deleteTicket,
-  updateTicketStatus,
+  decideTicket,
 } from "@/services/tickets";
-import type { TicketStatusUpdatePayload } from "@/services/tickets";
+import type { TicketDecisionPayload } from "@/services/tickets";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -13,13 +13,15 @@ import { toast } from "sonner";
 export const useGetTickets = ({
   page = 1,
   limit = 10,
+  status,
 }: {
   page: number;
   limit: number;
+  status?: string;
 }) => {
   return useQuery({
-    queryKey: ["tickets", page, limit],
-    queryFn: () => getTickets({ page, limit }),
+    queryKey: ["tickets", page, limit, status],
+    queryFn: () => getTickets({ page, limit, status }),
     placeholderData: (prev) => prev,
   });
 };
@@ -51,15 +53,15 @@ export const useAddTicket = () => {
 };
 
 // ✅ Update ticket
-export const useUpdateTicketStatus = () => {
+export const useDecideTicket = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...ticketData }: { id: string } & TicketStatusUpdatePayload) =>
-      updateTicketStatus(id, ticketData),
-    onSuccess: ({ data }: { data: { _id: string } }) => {
+    mutationFn: ({ id, ...decision }: { id: string } & TicketDecisionPayload) =>
+      decideTicket(id, decision),
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket", data._id] });
-      toast.success("Ticket updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["ticket", variables.id] });
+      toast.success("Decision recorded. Payment execution remains pending.");
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to update ticket");
