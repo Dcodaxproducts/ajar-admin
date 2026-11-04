@@ -608,6 +608,8 @@
     "listingParameters": "Listing parameters",
     "approvalStatus": "Approval status",
     "viewAttachment": "View attachment",
+    "notProvided": "Not provided",
+    "invalidValue": "Invalid value",
     "refundPolicySaved": "Refund policy saved successfully",
     "failedToSaveRefundPolicy": "Failed to save refund policy",
     "wholeNumbersRequired": "Use whole numbers only",

@@ -553,10 +553,13 @@ type Ratings = {
 };
 
 interface ListingParameter {
+  fieldId: string;
   key: string;
   label: string;
   type: string;
   value: unknown;
+  submitted: boolean;
+  configured: boolean;
   displayValue?: unknown;
   order: number;
   isMultiple: boolean;

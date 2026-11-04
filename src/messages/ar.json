@@ -607,6 +607,8 @@
     "listingParameters": "معلمات الإعلان",
     "approvalStatus": "حالة الموافقة",
     "viewAttachment": "عرض المرفق",
+    "notProvided": "غير مقدّم",
+    "invalidValue": "قيمة غير صالحة",
     "refundPolicySaved": "تم حفظ سياسة الاسترداد بنجاح",
     "failedToSaveRefundPolicy": "تعذر حفظ سياسة الاسترداد",
     "wholeNumbersRequired": "يرجى استخدام أرقام صحيحة فقط",
