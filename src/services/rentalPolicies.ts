@@ -6,7 +6,11 @@ interface RentalPolicies {
     depositRequired: boolean;
     depositAmount: number;
     depositConditions: string;
-    disputeWindowDays: number;
+    disputeWindowDays?: number;
+    disputeWindow: {
+      duration: number;
+      unit: "hours" | "days";
+    };
   };
   damageLiabilityTerms: {
     responsibilityClause: string;

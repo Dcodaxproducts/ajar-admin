@@ -210,6 +210,7 @@ interface ZoneForm {
   slug?: string;
   createdAt?: string;
   updatedAt?: string;
+  version?: number;
 }
 
 interface ZoneLanguage {
@@ -410,10 +411,13 @@ type Ticket = {
   rentalText: string;
   issueType: string;
   additionalFees: number;
-  attachments: any[]; // If you have a defined attachment structure, replace 'any'
+  attachments: string[];
   damagedCharges: number;
   approvedAmount?: number;
-  status: string;
+  adminNote?: string;
+  currency: "SAR";
+  version: number;
+  status: "pending" | "approved" | "partially_approved" | "rejected";
   createdAt: string;
   updatedAt: string;
 };
@@ -536,7 +540,16 @@ interface Ticket {
   _id: string;
   user: User | null;
   title: string;
-  status: "pending" | "inProgress" | "resolved";
+  status: "pending" | "approved" | "partially_approved" | "rejected";
+  rentalText: string;
+  issueType: string;
+  damagedCharges: number;
+  attachments: string[];
+  approvedAmount?: number;
+  adminNote?: string;
+  currency: "SAR";
+  version: number;
+  booking: Booking;
   createdAt: string;
   updatedAt: string;
 }
@@ -553,10 +566,13 @@ type Ratings = {
 };
 
 interface ListingParameter {
+  fieldId: string;
   key: string;
   label: string;
   type: string;
   value: unknown;
+  submitted: boolean;
+  configured: boolean;
   displayValue?: unknown;
   order: number;
   isMultiple: boolean;

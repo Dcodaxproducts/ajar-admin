@@ -14,11 +14,11 @@ describe("Ajar admin issue contracts", () => {
   it("requires an audited damage-dispute reason", () => {
     const service = read("../../services/tickets.ts");
     const page = read("../pages/TicketDetails.tsx");
-    expect(service).toContain("adminNote: string");
-    expect(page).toContain("resolutionReasonRequirements");
-    expect(page).toContain("adminNote: normalizedAdminNote");
-    expect(page).toContain("normalizedAdminNote.length >= 3");
-    expect(page).toContain("maxLength={1000}");
+    expect(service).toContain("reason: string");
+    expect(page).toContain("decisionReasonRequired");
+    expect(page).toContain("reason: decisionReason.trim()");
+    expect(page).toContain("decisionReason.trim().length >= 3");
+    expect(page).toContain("maxLength={2000}");
   });
   it("waits for the active zone list refresh before closing the create dialog", () => {
     const hook = read("../../hooks/useZones.ts");

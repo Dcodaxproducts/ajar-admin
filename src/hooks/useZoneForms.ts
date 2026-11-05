@@ -5,6 +5,7 @@ import {
   addZoneForm,
   updateZoneForm,
   deleteZoneForm,
+  reorderZoneFormFields,
 } from "@/services/zoneForms";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -76,6 +77,43 @@ export const useDeleteZoneForm = () => {
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Something went wrong");
+    },
+  });
+};
+
+
+export const useReorderZoneFormFields = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      fieldIds,
+      version,
+    }: {
+      id: string;
+      fieldIds: string[];
+      version: number;
+    }) => reorderZoneFormFields(id, fieldIds, version),
+    onSuccess: (response) => {
+      queryClient.setQueriesData(
+        { queryKey: ["zone-form"], exact: false },
+        (current: any) => {
+          if (current?.data?._id !== response.data._id) return current;
+          const fieldsById = new Map(
+            (current.data.fields || []).map((field: any) => [field._id, field])
+          );
+          return {
+            ...current,
+            data: {
+              ...current.data,
+              version: response.data.version,
+              fields: response.data.fields
+                .map(({ fieldId }) => fieldsById.get(fieldId))
+                .filter(Boolean),
+            },
+          };
+        }
+      );
     },
   });
 };

@@ -9,18 +9,29 @@ import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import Switch from "./forms/fields/Switch";
 import TextInput from "./forms/fields/TextInput";
+import SelectInput from "./forms/fields/SelectInput";
 import { Button } from "./ui/button";
 import Loader from "./Loader";
 import ResponseError from "./ResponseError";
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 
+type DisputeWindowUnit = "hours" | "days";
+
 interface SecurityDepositRulesFormValues {
   depositRequired: boolean;
   depositAmount: number;
   depositConditions: string;
-  disputeWindowDays: number;
+  disputeWindow: {
+    duration: number;
+    unit: DisputeWindowUnit;
+  };
 }
+
+const disputeWindowUnitOptions = [
+  { label: "hours", value: "hours" },
+  { label: "days", value: "days" },
+];
 
 const SecurityDepositRules = ({
   zone,
@@ -35,26 +46,45 @@ const SecurityDepositRules = ({
     subCategory
   );
 
-  const {
-    depositRequired = false,
-    depositAmount = 0,
-    depositConditions = "",
-    disputeWindowDays = 7,
-  } = data?.data?.securityDepositRules || {};
+  const rules = data?.data?.securityDepositRules || {};
+  const depositRequired = rules.depositRequired ?? false;
+  const depositAmount = rules.depositAmount ?? 0;
+  const depositConditions = rules.depositConditions ?? "";
+  const disputeWindow = rules.disputeWindow ?? {
+    duration: rules.disputeWindowDays ?? 7,
+    unit: "days" as const,
+  };
 
-  const initialData = {
+  const initialData: SecurityDepositRulesFormValues = {
     depositRequired,
     depositAmount,
     depositConditions,
-    disputeWindowDays,
+    disputeWindow,
   };
 
-  const schema = z.object({
-    depositRequired: z.boolean(),
-    depositAmount: z.number(),
-    depositConditions: z.string(),
-    disputeWindowDays: z.number(),
-  });
+  const schema = z
+    .object({
+      depositRequired: z.boolean(),
+      depositAmount: z.number(),
+      depositConditions: z.string(),
+      disputeWindow: z.object({
+        duration: z.number().int().min(1),
+        unit: z.enum(["hours", "days"]),
+      }),
+    })
+    .superRefine((value, context) => {
+      const maximum = value.disputeWindow.unit === "hours" ? 720 : 30;
+      if (value.disputeWindow.duration > maximum) {
+        context.addIssue({
+          code: z.ZodIssueCode.too_big,
+          maximum,
+          inclusive: true,
+          type: "number",
+          path: ["disputeWindow", "duration"],
+          message: t("disputeWindowRange", { maximum }),
+        });
+      }
+    });
 
   const methods = useForm<SecurityDepositRulesFormValues>({
     defaultValues: initialData,
@@ -68,9 +98,12 @@ const SecurityDepositRules = ({
       depositRequired,
       depositAmount,
       depositConditions,
-      disputeWindowDays,
+      disputeWindow: {
+        duration: disputeWindow.duration,
+        unit: disputeWindow.unit,
+      },
     });
-  }, [reset, depositRequired, depositAmount, depositConditions, disputeWindowDays]);
+  }, [reset, depositRequired, depositAmount, depositConditions, disputeWindow.duration, disputeWindow.unit]);
 
   const {
     mutate: update,
@@ -78,8 +111,17 @@ const SecurityDepositRules = ({
     error: updateError,
   } = useUpdateSecurityDepositRules();
 
-  const onSubmit = (data: any) => {
-    update({ zoneId: zone, subCategoryId: subCategory, data });
+  const onSubmit = (formData: SecurityDepositRulesFormValues) => {
+    update({
+      zoneId: zone,
+      subCategoryId: subCategory,
+      data: {
+        ...formData,
+        ...(formData.disputeWindow.unit === "days"
+          ? { disputeWindowDays: formData.disputeWindow.duration }
+          : {}),
+      },
+    });
   };
 
   if (isLoading) return <Loader />;
@@ -110,13 +152,23 @@ const SecurityDepositRules = ({
             className="col-span-2"
           />
           <TextInput
-            name="disputeWindowDays"
-            label="disputeWindowDays"
+            name="disputeWindow.duration"
+            label="disputeWindowDuration"
             type="number"
             control={control}
-            placeholder={t("enterDisputeWindowDays")}
+            placeholder={t("enterDisputeWindowDuration")}
+          />
+          <SelectInput
+            name="disputeWindow.unit"
+            label="disputeWindowUnit"
+            control={control}
+            options={disputeWindowUnitOptions}
           />
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          {t("disputeWindowHelp")}
+        </p>
 
         <div className="flex justify-end">
           <Button
