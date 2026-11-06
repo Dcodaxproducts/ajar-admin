@@ -11,7 +11,7 @@ type GetTicketsResponse = ApiResponse<{
 type GetTicketResponse = ApiResponse<Ticket>;
 export type SecurityDepositStatus = {
   state: string;
-  fundingMode?: "authorization_hold" | "captured_refundable";
+  fundingMode?: "authorization_hold" | "captured_refundable" | "legacy_combined";
   fallbackReason?: string;
   amountAuthorized?: number;
   amountCapturable?: number;
@@ -63,6 +63,13 @@ export const getSecurityDepositStatus = async (
   bookingId: string
 ): Promise<GetSecurityDepositStatusResponse> => {
   const response = await api.get(`/tickets/deposit/${bookingId}`);
+  return response.data;
+};
+
+export const retryTicketSettlement = async (ticketId: string) => {
+  const response = await api.post(
+    `/tickets/${ticketId}/settlement/retry`
+  );
   return response.data;
 };
 

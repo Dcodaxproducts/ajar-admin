@@ -5,6 +5,7 @@ import {
   deleteTicket,
   decideTicket,
   getSecurityDepositStatus,
+  retryTicketSettlement,
 } from "@/services/tickets";
 import type { TicketDecisionPayload } from "@/services/tickets";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,21 @@ export const useGetSecurityDepositStatus = (
   enabled: Boolean(bookingId),
   refetchInterval: 30_000,
 });
+
+export const useRetryTicketSettlement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: retryTicketSettlement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["security-deposit"] });
+      queryClient.invalidateQueries({ queryKey: ["ticket"] });
+      toast.success("Settlement retry scheduled");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Settlement retry failed");
+    },
+  });
+};
 
 // ✅ Add new ticket
 export const useAddTicket = () => {

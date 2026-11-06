@@ -15,7 +15,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDecideTicket, useGetSecurityDepositStatus, useGetTicket } from "@/hooks/useTickets";
+import {
+  useDecideTicket,
+  useGetSecurityDepositStatus,
+  useGetTicket,
+  useRetryTicketSettlement,
+} from "@/hooks/useTickets";
 import { format } from "date-fns";
 import TicketDetailSkeleton from "../skeletons/TicketSkeleton";
 import { useTranslations } from "next-intl";
@@ -39,6 +44,8 @@ const TicketDetail = ({ id }: { id: string }) => {
   const { data: depositStatusResponse } = useGetSecurityDepositStatus(bookingId);
   const depositStatus = depositStatusResponse?.data;
   const { mutate: decideTicket, isPending } = useDecideTicket();
+  const { mutate: retrySettlement, isPending: isRetryingSettlement } =
+    useRetryTicketSettlement();
   const [partialDialogOpen, setPartialDialogOpen] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState("");
   const [decisionReason, setDecisionReason] = useState("");
@@ -222,6 +229,16 @@ const TicketDetail = ({ id }: { id: string }) => {
               <p className="mt-2 text-sm text-destructive">
                 {t("depositFailureCode")}: {depositStatus.failureCode}
               </p>
+            )}
+            {depositStatus.canRetry && (
+              <Button
+                className="mt-4"
+                variant="outline"
+                disabled={isRetryingSettlement}
+                onClick={() => retrySettlement(id)}
+              >
+                {isRetryingSettlement ? t("retryingSettlement") : t("retrySettlement")}
+              </Button>
             )}
           </CardContent>
         </Card>

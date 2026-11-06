@@ -604,6 +604,14 @@
     "confirmApproveDecision": "Record this approval? No payment will be moved yet.",
     "confirmRejectDecision": "Record this rejection? No payment will be moved yet.",
     "paymentPendingStory3": "Payment execution is pending and belongs to the separate deposit workflow.",
+    "securityDepositStatus": "Security deposit status",
+    "depositFundingMode": "Funding mode",
+    "capturedAmount": "Captured amount",
+    "refundedAmount": "Refunded amount",
+    "depositFallbackActive": "Capture-then-refund fallback",
+    "depositFailureCode": "Provider action code",
+    "retrySettlement": "Retry settlement",
+    "retryingSettlement": "Retrying settlement…",
     "partiallyApprove": "Partially Approve",
     "approvedAmount": "Approved Amount",
     "partialApprovalAmountError": "Approved amount must be greater than 0 and cannot exceed the security deposit.",
@@ -716,6 +724,8 @@
     "capturedAmount": "Captured amount",
     "refundedAmount": "Refunded amount",
     "depositFallbackActive": "Capture-then-refund fallback",
-    "depositFailureCode": "Provider action code"
+    "depositFailureCode": "Provider action code",
+    "retrySettlement": "Retry settlement",
+    "retryingSettlement": "Retrying settlement…"
   }
 }

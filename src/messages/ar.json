@@ -603,6 +603,14 @@
     "confirmApproveDecision": "هل تريد تسجيل الموافقة؟ لن يتم تحريك أي مبلغ الآن.",
     "confirmRejectDecision": "هل تريد تسجيل الرفض؟ لن يتم تحريك أي مبلغ الآن.",
     "paymentPendingStory3": "تنفيذ الدفع معلّق ويتبع مسار معالجة التأمين المنفصل.",
+    "securityDepositStatus": "حالة مبلغ التأمين",
+    "depositFundingMode": "طريقة الاحتفاظ بالمبلغ",
+    "capturedAmount": "المبلغ المحصّل",
+    "refundedAmount": "المبلغ المسترد",
+    "depositFallbackActive": "مسار التحصيل ثم الاسترداد",
+    "depositFailureCode": "رمز إجراء مزود الدفع",
+    "retrySettlement": "إعادة محاولة التسوية",
+    "retryingSettlement": "جارٍ إعادة محاولة التسوية…",
     "partiallyApprove": "موافقة جزئية",
     "approvedAmount": "المبلغ الموافق عليه",
     "partialApprovalAmountError": "يجب أن يكون المبلغ أكبر من صفر وألا يتجاوز المطالبة أو مبلغ التأمين.",
@@ -715,6 +723,8 @@
     "capturedAmount": "المبلغ المحصّل",
     "refundedAmount": "المبلغ المسترد",
     "depositFallbackActive": "مسار التحصيل ثم الاسترداد",
-    "depositFailureCode": "رمز إجراء مزود الدفع"
+    "depositFailureCode": "رمز إجراء مزود الدفع",
+    "retrySettlement": "إعادة محاولة التسوية",
+    "retryingSettlement": "جارٍ إعادة محاولة التسوية…"
   }
 }

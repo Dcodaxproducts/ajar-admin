@@ -28,7 +28,9 @@ describe("damage dispute admin review", () => {
     const detail = readFileSync(join(root, "src/components/pages/TicketDetails.tsx"), "utf8");
     const service = readFileSync(join(root, "src/services/tickets.ts"), "utf8");
     expect(service).toContain("/tickets/deposit/");
+    expect(service).toContain("/settlement/retry");
     expect(detail).toContain("depositFundingMode");
+    expect(detail).toContain("retrySettlement");
     expect(detail).toContain("amountRefunded");
     expect(service).not.toContain("providerPaymentIntentId");
   });
