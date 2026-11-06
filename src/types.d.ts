@@ -415,7 +415,7 @@ type Ticket = {
   damagedCharges: number;
   approvedAmount?: number;
   adminNote?: string;
-  currency: "SAR";
+  currency: "USD";
   version: number;
   status: "pending" | "approved" | "partially_approved" | "rejected";
   createdAt: string;
@@ -547,7 +547,7 @@ interface Ticket {
   attachments: string[];
   approvedAmount?: number;
   adminNote?: string;
-  currency: "SAR";
+  currency: "USD";
   version: number;
   booking: Booking;
   createdAt: string;

@@ -709,6 +709,12 @@
     "failedToLoadDropdown": "فشل تحميل القائمة المنسدلة",
     "noDropdownFound": "لم يتم العثور على قائمة منسدلة",
     "searchByNameOrValue": "البحث بالاسم أو القيمة",
-    "searchByNameOrEmail": "البحث بالاسم أو البريد الإلكتروني..."
+    "searchByNameOrEmail": "البحث بالاسم أو البريد الإلكتروني...",
+    "securityDepositStatus": "حالة مبلغ التأمين",
+    "depositFundingMode": "طريقة الاحتفاظ بالمبلغ",
+    "capturedAmount": "المبلغ المحصّل",
+    "refundedAmount": "المبلغ المسترد",
+    "depositFallbackActive": "مسار التحصيل ثم الاسترداد",
+    "depositFailureCode": "رمز إجراء مزود الدفع"
   }
 }

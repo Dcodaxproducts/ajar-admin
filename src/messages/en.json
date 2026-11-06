@@ -710,6 +710,12 @@
     "failedToLoadDropdown": "Failed to load dropdown",
     "noDropdownFound": "No dropdown found",
     "searchByNameOrValue": "Search by name or value",
-    "searchByNameOrEmail": "Search by name or email..."
+    "searchByNameOrEmail": "Search by name or email...",
+    "securityDepositStatus": "Security deposit status",
+    "depositFundingMode": "Funding mode",
+    "capturedAmount": "Captured amount",
+    "refundedAmount": "Refunded amount",
+    "depositFallbackActive": "Capture-then-refund fallback",
+    "depositFailureCode": "Provider action code"
   }
 }

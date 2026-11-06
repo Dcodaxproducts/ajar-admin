@@ -9,11 +9,28 @@ type GetTicketsResponse = ApiResponse<{
 }>;
 
 type GetTicketResponse = ApiResponse<Ticket>;
+export type SecurityDepositStatus = {
+  state: string;
+  fundingMode?: "authorization_hold" | "captured_refundable";
+  fallbackReason?: string;
+  amountAuthorized?: number;
+  amountCapturable?: number;
+  amountCaptured?: number;
+  amountRefunded?: number;
+  currency?: "USD";
+  disputeDeadline?: string;
+  nextActionAt?: string;
+  failureCode?: string;
+  manualReviewRequired?: boolean;
+  canRetry?: boolean;
+  version?: number;
+};
+type GetSecurityDepositStatusResponse = ApiResponse<SecurityDepositStatus>;
 export type TicketDecisionPayload = {
   decision: "approved" | "rejected";
   reason: string;
   approvedAmount: number;
-  currency: "SAR";
+  currency: "USD";
   evidenceReferences: string[];
   expectedVersion: number;
   idempotencyKey: string;
@@ -39,6 +56,13 @@ export const getTicket = async (
   ticketId: string
 ): Promise<GetTicketResponse> => {
   const response = await api.get(`/tickets/${ticketId}`);
+  return response.data;
+};
+
+export const getSecurityDepositStatus = async (
+  bookingId: string
+): Promise<GetSecurityDepositStatusResponse> => {
+  const response = await api.get(`/tickets/deposit/${bookingId}`);
   return response.data;
 };
 

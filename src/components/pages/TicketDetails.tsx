@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDecideTicket, useGetTicket } from "@/hooks/useTickets";
+import { useDecideTicket, useGetSecurityDepositStatus, useGetTicket } from "@/hooks/useTickets";
 import { format } from "date-fns";
 import TicketDetailSkeleton from "../skeletons/TicketSkeleton";
 import { useTranslations } from "next-intl";
@@ -35,6 +35,9 @@ const TicketDetail = ({ id }: { id: string }) => {
   const t = useTranslations("translation");
   const tStatus = useTranslations("status");
   const { data, isLoading, error } = useGetTicket(id, true);
+  const bookingId = data?.data?.booking?._id;
+  const { data: depositStatusResponse } = useGetSecurityDepositStatus(bookingId);
+  const depositStatus = depositStatusResponse?.data;
   const { mutate: decideTicket, isPending } = useDecideTicket();
   const [partialDialogOpen, setPartialDialogOpen] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState("");
@@ -56,7 +59,7 @@ const TicketDetail = ({ id }: { id: string }) => {
     decision,
     reason: decisionReason.trim(),
     approvedAmount: amount,
-    currency: "SAR" as const,
+    currency: "USD" as const,
     evidenceReferences: attachments || [],
     expectedVersion: ticket.version || 0,
     idempotencyKey: crypto.randomUUID().replaceAll("-", ""),
@@ -193,6 +196,36 @@ const TicketDetail = ({ id }: { id: string }) => {
           )}
         </CardContent>
       </Card>
+
+      {depositStatus && depositStatus.state !== "NONE" && (
+        <Card className="shadow-md gap-2">
+          <CardHeader>
+            <CardTitle className="text-xl">{t("securityDepositStatus")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <InfoItem icon={<FileText className="w-4 h-4" />} label={t("status")}
+                value={depositStatus.state} />
+              <InfoItem icon={<FileText className="w-4 h-4" />} label={t("depositFundingMode")}
+                value={depositStatus.fundingMode || "—"} />
+              <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("capturedAmount")}
+                value={(Number(depositStatus.amountCaptured || 0).toFixed(2) + " " + (depositStatus.currency || "USD"))} />
+              <InfoItem icon={<DollarSign className="w-4 h-4" />} label={t("refundedAmount")}
+                value={(Number(depositStatus.amountRefunded || 0).toFixed(2) + " " + (depositStatus.currency || "USD"))} />
+            </div>
+            {depositStatus.fallbackReason && (
+              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+                {t("depositFallbackActive")}: {depositStatus.fallbackReason}
+              </p>
+            )}
+            {depositStatus.failureCode && (
+              <p className="mt-2 text-sm text-destructive">
+                {t("depositFailureCode")}: {depositStatus.failureCode}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Booking Details ── */}
       {booking && (

@@ -4,6 +4,7 @@ import {
   addTicket,
   deleteTicket,
   decideTicket,
+  getSecurityDepositStatus,
 } from "@/services/tickets";
 import type { TicketDecisionPayload } from "@/services/tickets";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +36,15 @@ export const useGetTicket = (ticketId: string, enabled: boolean = true) => {
     placeholderData: (prev) => prev,
   });
 };
+
+export const useGetSecurityDepositStatus = (
+  bookingId: string | undefined
+) => useQuery({
+  queryKey: ["security-deposit", bookingId],
+  queryFn: () => getSecurityDepositStatus(bookingId as string),
+  enabled: Boolean(bookingId),
+  refetchInterval: 30_000,
+});
 
 // ✅ Add new ticket
 export const useAddTicket = () => {

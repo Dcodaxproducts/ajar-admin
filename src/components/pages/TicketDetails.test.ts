@@ -17,9 +17,19 @@ describe("damage dispute admin review", () => {
     expect(list).not.toContain('actions={["delete"]}');
     expect(service).toContain("Math.min(limit, 50)");
   });
-  it("requires reason, amount, version, evidence, currency and idempotency", () => {
+  it("requires USD reason, amount, version, evidence, currency and idempotency", () => {
     const detail = readFileSync(join(root, "src/components/pages/TicketDetails.tsx"), "utf8");
     for (const field of ["decisionReason", "approvedAmount", "expectedVersion", "evidenceReferences", "currency", "idempotencyKey"]) expect(detail).toContain(field);
+    expect(detail).toContain('currency: "USD"');
+    expect(detail).not.toContain('currency: "SAR"');
     expect(detail).toContain("paymentPendingStory3");
+  });
+  it("shows sanitized capture-then-refund status without provider identifiers", () => {
+    const detail = readFileSync(join(root, "src/components/pages/TicketDetails.tsx"), "utf8");
+    const service = readFileSync(join(root, "src/services/tickets.ts"), "utf8");
+    expect(service).toContain("/tickets/deposit/");
+    expect(detail).toContain("depositFundingMode");
+    expect(detail).toContain("amountRefunded");
+    expect(service).not.toContain("providerPaymentIntentId");
   });
 });
